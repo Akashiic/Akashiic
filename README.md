@@ -14,7 +14,7 @@
 
 ## 👨‍💻 Sobre mim
 
-Olá! Me chamo **[Seu Nome]** e sou desenvolvedor web full-stack com foco em **Laravel (back-end)** e **Nuxt.js (front-end)**. 
+Olá! Me chamo **Gabriel Viana** e sou desenvolvedor web full-stack junior com foco em **Laravel (back-end)** e **Nuxt.js (front-end)**. 
 
 Desde 2020, venho criando aplicações modernas, rápidas e seguras — desde landing pages animadas até sistemas robustos com autenticação, checkout e painéis administrativos.
 
