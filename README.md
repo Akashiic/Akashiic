@@ -73,9 +73,9 @@ Trabalho com foco em **performance, SEO, segurança e escalabilidade**. Gosto de
 ## 📈 GitHub Stats
 
 <p align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=SEU_USERNAME_AQUI&show_icons=true&theme=radical&count_private=true" />
+  <img src="https://github-readme-stats.vercel.app/api?username=Akashiic&show_icons=true&theme=radical&count_private=true" />
   <br />
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=SEU_USERNAME_AQUI&layout=compact&theme=radical" />
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=Akashiic&layout=compact&theme=radical" />
 </p>
 
 ---
@@ -84,9 +84,9 @@ Trabalho com foco em **performance, SEO, segurança e escalabilidade**. Gosto de
 
 Se quiser colaborar, contratar ou bater um papo sobre tecnologia, me chama por aqui:
 
-- ✉️ **Email**: seuemail@email.com
-- 💼 **LinkedIn**: [Seu LinkedIn](https://linkedin.com/in/seulinkedin)
-- 🌐 **Portfólio**: [www.seusite.com](https://www.seusite.com)
+- ✉️ **Email**: fathom.apolion186@gmail.com
+- 💼 **LinkedIn**: [Seu LinkedIn]([https://linkedin.com/in/seulinkedin](https://www.linkedin.com/in/gabriel-viana-019339341/))
+- 🌐 **Portfólio**: [www.seusite.com](https://forbiddenseries.net)
 
 ---
 
