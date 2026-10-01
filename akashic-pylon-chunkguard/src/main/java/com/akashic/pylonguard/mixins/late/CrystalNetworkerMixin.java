@@ -39,7 +39,8 @@ import com.akashic.pylonguard.DeferredNetworkTiles;
  *    tiles, so resolving every deferred tile there is bounded;
  *  - size (RETURN): counts deferred tiles, so PylonFinder's "network has more than 100 tiles" shortcut behaves as
  *    unpatched;
- *  - save (RETURN): deferred tiles are appended to the saved list (nothing is ever dropped from the file);
+ *  - save (RETURN): deferred tiles are appended to the saved list (a deferred tile is never dropped from the file; a
+ *    saved location found empty when resolved is dropped, as ChromatiCraft drops its "null tile" entries);
  *  - addTile (RETURN) / removeTile (HEAD): a tile that registers or unregisters itself leaves the registry.
  * Public overloads delegate to the hooked ones (verified in the V33a bytecode), so each query is hooked once.
  */

@@ -127,7 +127,8 @@ Erros no log: o conjunto de linhas `ERROR` com o patch é idêntico ao da linha 
 Builds usados: E2b/E3/E4b/E5 rodaram com um build anterior em que o loader pulava o filtro de boot quando o jar antigo estava presente;
 E6b/E7b/E8 com o build `29a9c9a0…`; o 1.0.0 (`5575f205…`) difere deste só no texto de um aviso de log e passou pelo E9.
 Nesses experimentos o mixin do pylon e o do `PylonGenerator` são idênticos aos do 1.0.1; o do `CrystalNetworker` mudou no
-1.0.1 (seção 6.1), que foi testado em E10e, E11c, E12c e R1–R5. Jar entregue: **1.0.1 (`9bf45e50…`)**. O build é
+1.0.1 (seção 6.1), que foi testado em E10e, E11c, E12c e R1–R5. O 1.0.2 (seção 6.2) mudou o mixin do pylon e o do
+`PylonGenerator` e foi testado em T4, T5, E11d, E12d, R1b–R5b e C1–C3. Jar entregue: **1.0.2 (`3062f5de…`)**. O build é
 determinístico (mesmo SHA-256 em builds repetidos, com ou sem o dump de classes de runtime).
 
 ## 6.1 Rede de cristal e progressão (1.0.0 → 1.0.1)

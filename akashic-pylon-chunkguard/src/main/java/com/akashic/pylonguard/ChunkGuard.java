@@ -81,14 +81,6 @@ public final class ChunkGuard {
 		return true;
 	}
 
-	/** True when loc's chunk is not loaded. Counts the refusal. */
-	public static boolean refuse(WorldLocation loc, String what) {
-		if (isLoaded(loc))
-			return false;
-		count(loc.dimensionID, loc.xCoord, loc.zCoord, what);
-		return true;
-	}
-
 	public static long preventedSoFar() {
 		return prevented;
 	}

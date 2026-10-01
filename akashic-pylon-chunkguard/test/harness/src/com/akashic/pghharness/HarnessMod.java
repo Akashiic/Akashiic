@@ -1,5 +1,8 @@
 package com.akashic.pghharness;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -246,6 +249,71 @@ public class HarnessMod {
 				Reika.ChromatiCraft.Registry.ChromaTiles t = Reika.ChromatiCraft.Registry.ChromaTiles.REPEATER;
 				w.func_147465_d(x, y, z, t.getBlock(), t.getBlockMetadata(), 3);
 				LOG.info("[AKPG] repeater placed at " + x + "," + y + "," + z + " colour " + color + " tile=" + w.func_147438_o(x, y, z));
+			}
+			else if (a[0].equals("encrusted")) {
+				// akpg encrusted <x> <z>: encrusted-crystal tiles within 16 blocks (loaded tiles only)
+				int x = Integer.parseInt(a[1]), z = Integer.parseInt(a[2]), n = 0;
+				for (Object o : w.field_147482_g) // loadedTileEntityList
+					if (o instanceof Reika.ChromatiCraft.Block.BlockEncrustedCrystal.TileCrystalEncrusted) {
+						TileEntity te = (TileEntity) o;
+						if (Math.abs(te.field_145851_c - x) <= 16 && Math.abs(te.field_145849_e - z) <= 16)
+							n++;
+					}
+				LOG.info("[AKPG] encrusted near " + x + "," + z + " = " + n);
+			}
+			else if (a[0].equals("grow")) {
+				// akpg grow <x> <y> <z> <n>: runs the pylon's own (private) tryGrowEncrusted n times -- ChromatiCraft's code
+				// with whatever mixins are applied -- and reports the pylon's counted crystals and the chunk loads meanwhile.
+				// Method handles, not Class.getDeclaredMethod: the latter resolves every signature of the class (Thaumcraft
+				// types, absent on the test server).
+				int x = Integer.parseInt(a[1]), y = Integer.parseInt(a[2]), z = Integer.parseInt(a[3]), n = Integer.parseInt(a[4]);
+				TileEntity te = w.func_147438_o(x, y, z); // getTileEntity
+				if (!(te instanceof TileEntityCrystalPylon)) {
+					LOG.info("[AKPG] grow: no pylon at " + x + "," + y + "," + z);
+					return;
+				}
+				MethodHandles.Lookup lk = (MethodHandles.Lookup) MethodHandles.class.getMethod("privateLookupIn", Class.class, MethodHandles.Lookup.class).invoke(null, TileEntityCrystalPylon.class, MethodHandles.lookup());
+				MethodHandle grow = lk.findVirtual(TileEntityCrystalPylon.class, "tryGrowEncrusted", MethodType.methodType(void.class, World.class, int.class, int.class, int.class));
+				MethodHandle counted = lk.findGetter(TileEntityCrystalPylon.class, "encrustedBlocks", java.util.HashSet.class);
+				long l0 = loadsTotal;
+				try {
+					for (int i = 0; i < n; i++)
+						grow.invoke((TileEntityCrystalPylon) te, (World) w, x, y, z);
+				}
+				catch (Throwable t) {
+					throw new RuntimeException(t);
+				}
+				int c;
+				try {
+					c = ((java.util.HashSet<?>) counted.invoke((TileEntityCrystalPylon) te)).size();
+				}
+				catch (Throwable t) {
+					throw new RuntimeException(t);
+				}
+				LOG.info("[AKPG] grow " + n + " attempts at " + x + "," + y + "," + z + ": counted=" + c + " chunkLoadsDuring=" + (loadsTotal - l0));
+			}
+			else if (a[0].equals("removepylon")) {
+				// akpg removepylon <x> <y> <z>: delete the pylon block+tile the way an admin tool would (no mod hook)
+				int x = Integer.parseInt(a[1]), y = Integer.parseInt(a[2]), z = Integer.parseInt(a[3]);
+				w.func_147468_f(x, y, z); // setBlockToAir
+				LOG.info("[AKPG] removed block at " + x + "," + y + "," + z + " tile now=" + w.func_147438_o(x, y, z));
+			}
+			else if (a[0].equals("pyloncache")) {
+				// akpg pyloncache <x> <z>: is there a PylonGenerator cache entry at x,z (any y)?
+				int x = Integer.parseInt(a[1]), z = Integer.parseInt(a[2]);
+				Field cc = PylonGenerator.class.getDeclaredField("colorCache");
+				cc.setAccessible(true);
+				java.util.Map<?, ?> map = (java.util.Map<?, ?>) cc.get(PylonGenerator.instance);
+				int total = 0;
+				String found = "none";
+				for (Object col : map.values())
+					for (Object e : (java.util.Collection<?>) col) {
+						total++;
+						Reika.DragonAPI.Instantiable.Data.Immutable.WorldLocation l = ((PylonGenerator.PylonEntry) e).location;
+						if (l.xCoord == x && l.zCoord == z)
+							found = e.toString();
+					}
+				LOG.info("[AKPG] pyloncache at " + x + "," + z + ": " + found + " (cache size " + total + ")");
 			}
 			else if (a[0].equals("chargerstat")) {
 				Field en = Reika.ChromatiCraft.Base.TileEntity.CrystalReceiverBase.class.getDeclaredField("energy");

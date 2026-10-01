@@ -1,18 +1,18 @@
 package com.akashic.pylonguard.mixins.late;
 
 import net.minecraft.block.Block;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import Reika.ChromatiCraft.TileEntity.Networking.TileEntityCrystalPylon;
 import Reika.DragonAPI.Instantiable.Data.Immutable.BlockKey;
 import Reika.DragonAPI.Instantiable.Data.Immutable.Coordinate;
-import Reika.DragonAPI.Instantiable.Data.Immutable.WorldLocation;
 import Reika.DragonAPI.Libraries.World.ReikaWorldHelper;
 
 import com.akashic.pylonguard.ChunkGuard;
@@ -20,20 +20,24 @@ import com.akashic.pylonguard.ChunkGuard;
 /**
  * Stops crystal pylons from loading chunks from their server tick.
  *
- * ChromatiCraft V33a, TileEntityCrystalPylon.updateEntity (server side), reads blocks outside the pylon's own chunk:
- * every tick, a pylon at full energy picks a random block up to 12 blocks away horizontally and calls getBlock on it;
- * it also reads a random block of its structure, its 3x3x3 neighbourhood and the tiles of linked pylons. Coordinate.getBlock
- * on an unloaded chunk loads it synchronously from disk (or generates it). With no player online every pylon is full,
- * so each one keeps loading the up-to-9 chunks around it; the spark profile shows 34% of the server thread in
- * ChunkProviderServer.loadChunk from exactly this call, and ~112k chunks loaded with 0 players.
+ * ChromatiCraft V33a, TileEntityCrystalPylon.updateEntity (server side): every tick, a pylon at full energy reads a
+ * random block up to 12 blocks away horizontally (Coordinate.getBlock), plus a random block of its structure. A read in
+ * an unloaded chunk loads it synchronously from disk. With no player online every pylon is full, so each one kept
+ * loading the ~6 chunks around it: 34 % of the server thread in ChunkProviderServer.loadChunk in the spark profile and
+ * ~119k chunks for 19,087 pylons (124,499 in the heap summary).
  *
- * Each redirect below performs the original call unchanged when the chunk is loaded, and otherwise answers as if the
- * target were an inert solid block (or "no tile"), which makes every caller take its "do nothing" branch:
- *  - snow clearing on the structure, encrusted-crystal growth/scan: bedrock is neither snow, air, rune, pylon
- *    structure nor encrusted crystal, so nothing is placed, removed or counted;
- *  - jar rejection (isBlockEncased): "not encased", so nothing is broken;
- *  - linked-pylon energy sharing: "no tile", the existing instanceof check skips that pylon this tick.
- * Nothing changes while the chunks around a pylon are loaded (player nearby or chunk loader): the original calls run.
+ * Policy: a guarded action is only POSTPONED, never altered. When every position it needs is loaded, ChromatiCraft's
+ * own code runs unchanged; when one is not, that tick's attempt is skipped as if the random roll had missed:
+ *  - random 12-block scan and structure snow clearing: skipped for that tick;
+ *  - encrusted-crystal growth (tryGrowEncrustedAt): all-or-nothing, cancelled unless its source block and the 3x3
+ *    column around its target are loaded, so the growth amount, the rune bonus and the 6-crystal cap are computed by
+ *    the original code or not at all;
+ *  - jar rejection (isBlockEncased): the "encased" check is postponed until the 3x3x3 box around the pylon is loaded.
+ * Deliberately NOT touched (original behaviour kept):
+ *  - reloadEncrusted (tick 0): counts the existing encrusted crystals for the cap; it only reads the structure
+ *    neighbourhood (+-4 blocks, at most 3 neighbour chunks, once per pylon load);
+ *  - energy sharing between linked pylons: Pylon Link tiles keep their 3x3 chunks loaded by ticket anyway;
+ *  - charging, attacks, wand interactions and every progression trigger (PYLON, LINK, POWERCRYSTAL, ...).
  *
  * All targets are ChromatiCraft/DragonAPI members (not obfuscated), hence remap = false. require/allow pin the exact
  * number of call sites found in the V33a bytecode, so a different ChromatiCraft build fails loudly at startup instead
@@ -43,19 +47,17 @@ import com.akashic.pylonguard.ChunkGuard;
 public abstract class TileEntityCrystalPylonMixin {
 
 	/**
-	 * 6 sites: updateEntity (structure snow check, 12-block random scan), reloadEncrusted, tryGrowEncrusted,
-	 * tryGrowEncrustedAt, growEncrustedAt. forceCrystalColorMatch (player-triggered) is left alone.
+	 * 3 sites: updateEntity (structure snow check, 12-block random scan) and tryGrowEncrusted (the source block of a
+	 * growth attempt; when it is not loaded the attempt is then cancelled by the tryGrowEncrustedAt guard below, so the
+	 * placeholder value is never acted upon).
 	 */
 	@Redirect(
 		method = {
 			"updateEntity(Lnet/minecraft/world/World;IIII)V",
-			"reloadEncrusted(Lnet/minecraft/world/World;III)V",
-			"tryGrowEncrusted(Lnet/minecraft/world/World;III)V",
-			"tryGrowEncrustedAt(Lnet/minecraft/world/World;LReika/DragonAPI/Instantiable/Data/Immutable/Coordinate;LReika/DragonAPI/Instantiable/Data/Immutable/Coordinate;Z)V",
-			"growEncrustedAt(Lnet/minecraft/world/World;LReika/DragonAPI/Instantiable/Data/Immutable/Coordinate;IIIZZ)V"
+			"tryGrowEncrusted(Lnet/minecraft/world/World;III)V"
 		},
 		at = @At(value = "INVOKE", target = "LReika/DragonAPI/Instantiable/Data/Immutable/Coordinate;getBlock(Lnet/minecraft/world/IBlockAccess;)Lnet/minecraft/block/Block;"),
-		require = 6, allow = 6)
+		require = 3, allow = 3)
 	private Block akashic$getBlockIfLoaded(Coordinate c, IBlockAccess world) {
 		if (ChunkGuard.refuse(world, c.xCoord, c.zCoord, "getBlock"))
 			return ChunkGuard.UNLOADED_BLOCK;
@@ -73,6 +75,20 @@ public abstract class TileEntityCrystalPylonMixin {
 		return c.getBlockKey(world);
 	}
 
+	/**
+	 * Growth attempt (called from tryGrowEncrusted and from the 12-block scan in updateEntity): runs entirely as in
+	 * ChromatiCraft when the source block and the 3x3 column around the target block are in loaded chunks, otherwise not
+	 * at all. The 3x3 box matters because growing reads the target's six neighbours (CrystalGrowth.canExist) and the
+	 * block placement notifies them; at a chunk edge either one would load the next chunk.
+	 */
+	@Inject(
+		method = "tryGrowEncrustedAt(Lnet/minecraft/world/World;LReika/DragonAPI/Instantiable/Data/Immutable/Coordinate;LReika/DragonAPI/Instantiable/Data/Immutable/Coordinate;Z)V",
+		at = @At("HEAD"), cancellable = true, require = 1, allow = 1)
+	private void akashic$growOnlyIfLoaded(World world, Coordinate from, Coordinate c, boolean addToCount, CallbackInfo ci) {
+		if (ChunkGuard.refuse(world, from.xCoord, from.zCoord, "encrusted growth") || ChunkGuard.refuseNeighbourhood(world, c.xCoord, c.zCoord, "encrusted growth"))
+			ci.cancel();
+	}
+
 	/** 1 site: updateEntity, jar-rejection check over the 3x3x3 box around the pylon. */
 	@Redirect(
 		method = "updateEntity(Lnet/minecraft/world/World;IIII)V",
@@ -82,20 +98,5 @@ public abstract class TileEntityCrystalPylonMixin {
 		if (ChunkGuard.refuseNeighbourhood(world, x, z, "isBlockEncased"))
 			return false;
 		return ReikaWorldHelper.isBlockEncased(world, x, y, z, b);
-	}
-
-	/**
-	 * 1 site: updateEntity, the loop that donates energy to the other pylons of a pylon-link network (those can be
-	 * anywhere). getLinkTile() is deliberately NOT redirected: the link tile always sits 9 blocks below its pylon
-	 * (TileEntityPylonLink.getPylon), i.e. in the pylon's own chunk, and its result also feeds the PylonGenerator cache.
-	 */
-	@Redirect(
-		method = "updateEntity(Lnet/minecraft/world/World;IIII)V",
-		at = @At(value = "INVOKE", target = "LReika/DragonAPI/Instantiable/Data/Immutable/WorldLocation;getTileEntity()Lnet/minecraft/tileentity/TileEntity;"),
-		require = 1, allow = 1)
-	private TileEntity akashic$getTileEntityIfLoaded(WorldLocation loc) {
-		if (ChunkGuard.refuse(loc, "linked pylon"))
-			return null;
-		return loc.getTileEntity();
 	}
 }
