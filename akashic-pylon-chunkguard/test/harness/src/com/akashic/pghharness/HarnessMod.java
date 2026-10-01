@@ -251,13 +251,19 @@ public class HarnessMod {
 				LOG.info("[AKPG] repeater placed at " + x + "," + y + "," + z + " colour " + color + " tile=" + w.func_147438_o(x, y, z));
 			}
 			else if (a[0].equals("encrusted")) {
-				// akpg encrusted <x> <z>: encrusted-crystal tiles within 16 blocks (loaded tiles only)
+				// akpg encrusted <x> <z>: encrusted-crystal tiles within 16 blocks, in loaded chunks only. Read from the chunks'
+				// tile maps: TileCrystalEncrusted.canUpdate() is false, so it is never in World.loadedTileEntityList.
 				int x = Integer.parseInt(a[1]), z = Integer.parseInt(a[2]), n = 0;
-				for (Object o : w.field_147482_g) // loadedTileEntityList
-					if (o instanceof Reika.ChromatiCraft.Block.BlockEncrustedCrystal.TileCrystalEncrusted) {
-						TileEntity te = (TileEntity) o;
-						if (Math.abs(te.field_145851_c - x) <= 16 && Math.abs(te.field_145849_e - z) <= 16)
-							n++;
+				for (int cx = (x - 16) >> 4; cx <= (x + 16) >> 4; cx++)
+					for (int cz = (z - 16) >> 4; cz <= (z + 16) >> 4; cz++) {
+						if (!w.func_72863_F().func_73149_a(cx, cz)) // getChunkProvider().chunkExists: never loads
+							continue;
+						for (Object o : w.func_72964_e(cx, cz).field_150816_i.values()) // getChunkFromChunkCoords, chunkTileEntityMap
+							if (o instanceof Reika.ChromatiCraft.Block.BlockEncrustedCrystal.TileCrystalEncrusted) {
+								TileEntity te = (TileEntity) o;
+								if (Math.abs(te.field_145851_c - x) <= 16 && Math.abs(te.field_145849_e - z) <= 16)
+									n++;
+							}
 					}
 				LOG.info("[AKPG] encrusted near " + x + "," + z + " = " + n);
 			}
