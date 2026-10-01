@@ -1,0 +1,19 @@
+# E6b-both-jars  (Crucible 1.7.10-staging-67b53034, ChromatiCraft V33a, DragonAPI V33b-ForbiddenFix1, UniMixins 0.3.1; 0 players)
+[RFB-Main/ERROR] [org.spongepowered.asm.service.mojang.MixinServiceLaunchWrapper]: MixinBootstrap.doInit() called during a tweak constructor!
+[Server thread/WARN] [AkashicPylonGuard]: akashic-crystalnet-lazyload is also installed. It is redundant with this mod (and on this server its filter never ran: every saved tile chunk was still loaded at startup). Both can coexist safely, but remove akashic-crystalnet-lazyload-*.jar from mods/.
+[Server thread/INFO] [AkashicPylonGuard]: Crystal pylon chunk guard: applying [TileEntityCrystalPylonMixin, PylonGeneratorMixin, CrystalNetworkerMixin].
+[Server thread/ERROR] [DragonAPI]: The mod DragonAPI is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source DragonAPI 1.7.10 V33b-ForbiddenFix1.jar, however there is no signature matching that description
+[Server thread/ERROR] [ChromatiCraft]: The mod ChromatiCraft is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source ChromatiCraft 1.7.10 V33a.jar, however there is no signature matching that description
+[Server thread/ERROR] [FML]: CHROMATICRAFT ERROR: Could not parse Guardian Stone exception, due to a malformed line (or missing item): ExtraUtilities:dark_portal:2#RIGHT_CLICK_BLOCK
+[Server thread/ERROR] [Reika.DragonAPI.Libraries.Java.ReikaASMHelper]: Called output without active mod!
+[Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer]: Done (15.247s)! For help, type "help" or "?"
+[Server thread/INFO] [AkashicPylonGuard]: Crystal network load: 46 saved tile locations; 4 in loaded chunks resolved now; 42 in unloaded chunks NOT force-loaded (they re-register when their chunk loads); 0 in-memory registrations kept; 0 unreadable entries left to ChromatiCraft; 1 ms.
+[Server thread/INFO] [AkashicPylonGuard]: Pylon location cache load: 4 pylons in loaded chunks validated; 42 pylons in unloaded chunks kept without force-loading their chunk.
+[Server thread/INFO] [AkashicPylonGuard]: Prevented the first chunk load by a crystal pylon (getBlock at dim 0, block -17, -40, chunk -2, -3). Further ones are summarised every 10 minutes.
+[Server thread/INFO] [AKPG]: [AKPG] tick=200 mspt=1.32 loaded=276 loaded0=276 loads=1 loadsTotal=1 pylons=4 net=4 prevented=40
+[Server thread/INFO] [AKPG]: [AKPG] tick=400 mspt=1.17 loaded=276 loaded0=276 loads=0 loadsTotal=1 pylons=4 net=4 prevented=75
+[Server thread/INFO] [AKPG]: [AKPG] tick=600 mspt=1.09 loaded=276 loaded0=276 loads=0 loadsTotal=1 pylons=4 net=4 prevented=114
+[Server thread/INFO] [AKPG]: [AKPG] tick=800 mspt=0.87 loaded=256 loaded0=256 loads=0 loadsTotal=1 pylons=3 net=4 prevented=116
+[Server thread/INFO] [AKPG]: [AKPG] tick=1000 mspt=0.83 loaded=256 loaded0=256 loads=0 loadsTotal=1 pylons=3 net=4 prevented=116
+[Server thread/INFO] [AKPG]: [AKPG] tick=1200 mspt=0.81 loaded=256 loaded0=256 loads=0 loadsTotal=1 pylons=3 net=4 prevented=116
+[Server thread/INFO] [AKPG]: [AKPG] tick=1224 mspt=0.71 loaded=256 loaded0=256 loads=0 loadsTotal=1 pylons=3 net=4 prevented=116

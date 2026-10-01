@@ -1,0 +1,245 @@
+package com.akashic.pghharness;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.world.ChunkCoordIntPair;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.ForgeChunkManager;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.ChunkEvent;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import Reika.ChromatiCraft.Magic.Network.CrystalNetworker;
+import Reika.ChromatiCraft.TileEntity.Networking.TileEntityCrystalPylon;
+import Reika.ChromatiCraft.World.IWG.PylonGenerator;
+
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerStartingEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
+
+/**
+ * TEST-ONLY harness (never install on a real server). Builds a reproducible crystal-pylon scenario with ChromatiCraft's
+ * own generator and prints machine-readable measurements:
+ *   [AKPG] tick=.. mspt=.. loaded=<chunks, all dims> loaded0=<overworld> loads=<ChunkEvent.Load in window>
+ *          pylons=<TileEntityCrystalPylon loaded> net=<CrystalNetworker tiles> prevented=<ChunkGuard counter or -1>
+ * Commands (console): akpg place <n> <spacing> | akpg fill | akpg stats | akpg ticket <x> <z> <r> | akpg pylons
+ * Minecraft members are referenced by SRG name (see tools/build.sh); MCP names are in comments.
+ */
+@Mod(modid = "akashic_pg_harness", name = "AKPG test harness", version = "test", acceptableRemoteVersions = "*")
+public class HarnessMod {
+
+	static final Logger LOG = LogManager.getLogger("AKPG");
+	static final int INTERVAL = Integer.getInteger("akpg.interval", 200);
+
+	@Mod.Instance("akashic_pg_harness")
+	public static HarnessMod instance;
+
+	private long loadsWindow;
+	private long loadsTotal;
+	private int ticks;
+
+	@Mod.EventHandler
+	public void init(FMLInitializationEvent e) {
+		ForgeChunkManager.setForcedChunkLoadingCallback(this, new ForgeChunkManager.LoadingCallback() {
+			@Override
+			public void ticketsLoaded(List<ForgeChunkManager.Ticket> tickets, World world) {
+				for (ForgeChunkManager.Ticket t : tickets)
+					ForgeChunkManager.releaseTicket(t); // test tickets never survive a restart
+			}
+		});
+	}
+
+	@Mod.EventHandler
+	public void serverStarting(FMLServerStartingEvent e) {
+		e.registerServerCommand(new Cmd());
+		FMLCommonHandler.instance().bus().register(this);
+		MinecraftForge.EVENT_BUS.register(this);
+	}
+
+	@SubscribeEvent
+	public void onChunkLoad(ChunkEvent.Load e) {
+		if (!e.world.field_72995_K) { // isRemote
+			loadsWindow++;
+			loadsTotal++;
+		}
+	}
+
+	@SubscribeEvent
+	public void onTick(TickEvent.ServerTickEvent e) {
+		if (e.phase != TickEvent.Phase.END)
+			return;
+		if (++ticks % INTERVAL == 0)
+			LOG.info(stats());
+	}
+
+	String stats() {
+		MinecraftServer srv = MinecraftServer.func_71276_C(); // getServer
+		long sum = 0;
+		for (long t : srv.field_71311_j) // tickTimeArray
+			sum += t;
+		double mspt = sum / (double) srv.field_71311_j.length / 1.0e6;
+		int loaded = 0, loaded0 = 0, pylons = 0;
+		for (WorldServer ws : srv.field_71305_c) { // worldServers
+			int n = ws.field_73059_b.func_73152_e(); // theChunkProviderServer.getLoadedChunkCount()
+			loaded += n;
+			if (ws.field_73011_w.field_76574_g == 0)
+				loaded0 = n;
+			for (Object o : ws.field_147482_g) // loadedTileEntityList
+				if (o instanceof TileEntityCrystalPylon)
+					pylons++;
+		}
+		long prevented = -1;
+		try {
+			prevented = (Long) Class.forName("com.akashic.pylonguard.ChunkGuard").getMethod("preventedSoFar").invoke(null);
+		}
+		catch (Throwable ignored) {
+		}
+		String s = String.format("[AKPG] tick=%d mspt=%.2f loaded=%d loaded0=%d loads=%d loadsTotal=%d pylons=%d net=%d prevented=%d",
+			srv.func_71259_af(), mspt, loaded, loaded0, loadsWindow, loadsTotal, pylons, CrystalNetworker.instance.size(), prevented);
+		loadsWindow = 0;
+		return s;
+	}
+
+	/** Typed as TileEntity on purpose: javac cannot resolve inherited members through the pylon class here (its
+	 *  Thaumcraft API interfaces are not on the compile classpath). */
+	static List<TileEntity> loadedPylons(World w) {
+		List<TileEntity> li = new ArrayList<TileEntity>();
+		for (Object o : w.field_147482_g) // loadedTileEntityList
+			if (o instanceof TileEntityCrystalPylon)
+				li.add((TileEntity) o);
+		return li;
+	}
+
+	/**
+	 * Sets the pylon to full energy. Capacity = TileEntityCrystalPylon.getCapacity() in V33a: isEnhanced() ? 900000 :
+	 * 180000; generated pylons are never enhanced. (Reflective method lookups are avoided: they resolve client-only
+	 * types on a dedicated server.)
+	 */
+	static void fill(TileEntity te) throws Exception {
+		Field energy = TileEntityCrystalPylon.class.getDeclaredField("energy");
+		energy.setAccessible(true);
+		energy.setInt(te, 180000);
+		te.func_70296_d(); // markDirty
+	}
+
+	class Cmd extends CommandBase {
+		@Override
+		public String func_71517_b() { // getCommandName
+			return "akpg";
+		}
+
+		@Override
+		public String func_71518_a(ICommandSender s) { // getCommandUsage
+			return "/akpg place <n> <spacing> | fill | stats | ticket <x> <z> <r> | pylons | setenergy <x> <z> <v>";
+		}
+
+		@Override
+		public void func_71515_b(ICommandSender s, String[] a) { // processCommand
+			try {
+				run(s, a);
+			}
+			catch (Exception ex) {
+				LOG.error("akpg failed", ex);
+				say(s, "error: " + ex);
+			}
+		}
+
+		private void run(ICommandSender s, String[] a) throws Exception {
+			WorldServer w = MinecraftServer.func_71276_C().field_71305_c[0];
+			if (a.length == 0) {
+				say(s, func_71518_a(s));
+				return;
+			}
+			if (a[0].equals("place")) {
+				int n = Integer.parseInt(a[1]);
+				int spacing = Integer.parseInt(a[2]);
+				Method gen = PylonGenerator.class.getDeclaredMethod("generatePylon", Random.class, World.class, int.class, int.class, int.class);
+				gen.setAccessible(true);
+				Random r = new Random(1234);
+				for (int i = 0; i < n; i++) {
+					int x = 3000 + i * spacing;
+					x = (x & ~15) + 2; // 2 blocks from the chunk border: the 12-block scan reaches the neighbour chunks
+					int z = (3000 & ~15) + 2;
+					for (int dx = -1; dx <= 1; dx++)
+						for (int dz = -1; dz <= 1; dz++)
+							w.func_72964_e((x >> 4) + dx, (z >> 4) + dz); // getChunkFromChunkCoords (generate)
+					int y = w.func_72825_h(x, z) - 1; // getTopSolidOrLiquidBlock
+					gen.invoke(PylonGenerator.instance, r, w, x, y, z);
+					int filled = 0;
+					for (TileEntity te : loadedPylons(w)) {
+						if (Math.abs(te.field_145851_c - x) <= 32 && Math.abs(te.field_145849_e - z) <= 32) {
+							fill(te); // full energy, like any pylon nobody has drained for a while
+							filled++;
+						}
+					}
+					LOG.info("[AKPG] placed pylon #" + i + " near " + x + "," + (y + 9) + "," + z + " filled=" + filled);
+				}
+				say(s, "placed " + n);
+			}
+			else if (a[0].equals("fill")) {
+				int k = 0;
+				for (TileEntity te : loadedPylons(w)) {
+					fill(te);
+					k++;
+				}
+				LOG.info("[AKPG] filled " + k + " pylons");
+				say(s, "filled " + k);
+			}
+			else if (a[0].equals("stats")) {
+				String st = stats();
+				LOG.info(st);
+				say(s, st);
+			}
+			else if (a[0].equals("pylons")) {
+				Field energy = TileEntityCrystalPylon.class.getDeclaredField("energy");
+				energy.setAccessible(true);
+				for (TileEntity te : loadedPylons(w))
+					LOG.info("[AKPG] pylon " + te.field_145851_c + "," + te.field_145848_d + "," + te.field_145849_e + " energy=" + energy.getInt(te));
+			}
+			else if (a[0].equals("setenergy")) {
+				int x = Integer.parseInt(a[1]), z = Integer.parseInt(a[2]), v = Integer.parseInt(a[3]);
+				Field energy = TileEntityCrystalPylon.class.getDeclaredField("energy");
+				energy.setAccessible(true);
+				for (TileEntity te : loadedPylons(w)) {
+					if (Math.abs(te.field_145851_c - x) <= 32 && Math.abs(te.field_145849_e - z) <= 32) {
+						energy.setInt(te, v);
+						LOG.info("[AKPG] set energy of pylon " + te.field_145851_c + "," + te.field_145848_d + "," + te.field_145849_e + " to " + v);
+					}
+				}
+			}
+			else if (a[0].equals("ticket")) {
+				int cx = Integer.parseInt(a[1]) >> 4, cz = Integer.parseInt(a[2]) >> 4, r = Integer.parseInt(a[3]);
+				ForgeChunkManager.Ticket t = ForgeChunkManager.requestTicket(instance, w, ForgeChunkManager.Type.NORMAL);
+				for (int dx = -r; dx <= r; dx++)
+					for (int dz = -r; dz <= r; dz++)
+						ForgeChunkManager.forceChunk(t, new ChunkCoordIntPair(cx + dx, cz + dz));
+				LOG.info("[AKPG] ticket forcing " + (2 * r + 1) * (2 * r + 1) + " chunks around chunk " + cx + "," + cz);
+				say(s, "ticket ok");
+			}
+		}
+
+		@Override
+		public int compareTo(Object o) {
+			return o instanceof net.minecraft.command.ICommand ? func_71517_b().compareTo(((net.minecraft.command.ICommand) o).func_71517_b()) : 0;
+		}
+
+		private void say(ICommandSender s, String m) {
+			s.func_145747_a(new ChatComponentText(m)); // addChatMessage
+		}
+	}
+}

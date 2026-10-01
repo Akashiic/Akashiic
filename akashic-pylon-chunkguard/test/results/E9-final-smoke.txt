@@ -1,0 +1,30 @@
+# E9-final-smoke (final jar 5575f205, old lazyload jar also present; Crucible 1.7.10-staging-67b53034, ChromatiCraft V33a, DragonAPI V33b-ForbiddenFix1, UniMixins 0.3.1; 0 players)
+[RFB-Main/ERROR] [org.spongepowered.asm.service.mojang.MixinServiceLaunchWrapper]: MixinBootstrap.doInit() called during a tweak constructor!
+[Server thread/WARN] [AkashicPylonGuard]: akashic-crystalnet-lazyload is also installed. It is redundant with this mod (in testing its filter never took effect: every saved tile chunk was still loaded at startup). Both can coexist safely, but remove akashic-crystalnet-lazyload-*.jar from mods/.
+[Server thread/INFO] [AkashicPylonGuard]: Crystal pylon chunk guard: applying [TileEntityCrystalPylonMixin, PylonGeneratorMixin, CrystalNetworkerMixin].
+[Server thread/ERROR] [DragonAPI]: The mod DragonAPI is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source DragonAPI 1.7.10 V33b-ForbiddenFix1.jar, however there is no signature matching that description
+[Server thread/ERROR] [ChromatiCraft]: The mod ChromatiCraft is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source ChromatiCraft 1.7.10 V33a.jar, however there is no signature matching that description
+[Server thread/ERROR] [FML]: CHROMATICRAFT ERROR: Could not parse Guardian Stone exception, due to a malformed line (or missing item): ExtraUtilities:dark_portal:2#RIGHT_CLICK_BLOCK
+[Server thread/ERROR] [Reika.DragonAPI.Libraries.Java.ReikaASMHelper]: Called output without active mod!
+[ChromatiCraft Dimension Structure/ERROR] [FML]: CHROMATICRAFT ERROR: Failed to generate a 4x4 [true-true] puzzle in a reasonable time!
+[ChromatiCraft Dimension Structure/ERROR] [FML]: CHROMATICRAFT ERROR: Failed to generate a 4x4 [true-false] puzzle in a reasonable time!
+[Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer]: Done (14.968s)! For help, type "help" or "?"
+[Server thread/INFO] [AkashicPylonGuard]: Crystal network load: 46 saved tile locations; 4 in loaded chunks resolved now; 42 in unloaded chunks NOT force-loaded (they re-register when their chunk loads); 0 in-memory registrations kept; 0 unreadable entries left to ChromatiCraft; 1 ms.
+[Server thread/INFO] [AkashicPylonGuard]: Pylon location cache load: 4 pylons in loaded chunks validated; 42 pylons in unloaded chunks kept without force-loading their chunk.
+[Server thread/INFO] [AKPG]: [AKPG] tick=200 mspt=1.90 loaded=625 loaded0=625 loads=0 loadsTotal=0 pylons=4 net=4 prevented=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=400 mspt=1.46 loaded=625 loaded0=625 loads=0 loadsTotal=0 pylons=4 net=4 prevented=0
+[Server thread/INFO] [AkashicPylonGuard]: Prevented the first chunk load by a crystal pylon (getBlock at dim 0, block -24, -36, chunk -2, -3). Further ones are summarised every 10 minutes.
+[Server thread/INFO] [AKPG]: [AKPG] tick=600 mspt=0.85 loaded=275 loaded0=275 loads=0 loadsTotal=0 pylons=4 net=4 prevented=34
+[Server thread/INFO] [AKPG]: [AKPG] tick=800 mspt=0.82 loaded=275 loaded0=275 loads=0 loadsTotal=0 pylons=4 net=4 prevented=75
+[Server thread/INFO] [AKPG]: [AKPG] tick=1000 mspt=0.88 loaded=275 loaded0=275 loads=0 loadsTotal=0 pylons=4 net=4 prevented=108
+[Server thread/INFO] [AKPG]: [AKPG] tick=1200 mspt=0.90 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110
+[Server thread/INFO] [AKPG]: [AKPG] tick=1400 mspt=0.29 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110
+[Server thread/INFO] [AKPG]: [AKPG] tick=1600 mspt=0.26 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110
+[Server thread/INFO] [AKPG]: [AKPG] tick=1800 mspt=0.26 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110
+[Server thread/INFO] [AKPG]: [AKPG] tick=2000 mspt=0.26 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110
+[Server thread/INFO] [AKPG]: [AKPG] tick=2200 mspt=0.24 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110
+[Server thread/INFO] [AKPG]: [AKPG] tick=2400 mspt=0.28 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110
+[Server thread/INFO] [AKPG]: [AKPG] tick=2600 mspt=0.29 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110
+[Server thread/INFO] [AKPG]: [AKPG] tick=2800 mspt=0.26 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110
+[Server thread/INFO] [AKPG]: [AKPG] tick=2997 mspt=0.20 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110
+[Server thread/INFO] [AKPG]: [AKPG] tick=3000 mspt=0.25 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=4 prevented=110

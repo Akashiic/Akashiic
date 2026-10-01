@@ -1,0 +1,40 @@
+# E0-baseline  (Crucible 1.7.10-staging-67b53034, ChromatiCraft V33a, DragonAPI V33b-ForbiddenFix1, UniMixins 0.3.1; 0 players)
+[RFB-Main/ERROR] [org.spongepowered.asm.service.mojang.MixinServiceLaunchWrapper]: MixinBootstrap.doInit() called during a tweak constructor!
+[Server thread/ERROR] [DragonAPI]: The mod DragonAPI is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source DragonAPI 1.7.10 V33b-ForbiddenFix1.jar, however there is no signature matching that description
+[Server thread/ERROR] [ChromatiCraft]: The mod ChromatiCraft is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source ChromatiCraft 1.7.10 V33a.jar, however there is no signature matching that description
+[Server thread/ERROR] [FML]: CHROMATICRAFT ERROR: Could not parse Guardian Stone exception, due to a malformed line (or missing item): ExtraUtilities:dark_portal:2#RIGHT_CLICK_BLOCK
+[Server thread/ERROR] [Reika.DragonAPI.Libraries.Java.ReikaASMHelper]: Called output without active mod!
+[Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer]: Done (19.246s)! For help, type "help" or "?"
+[Server thread/INFO] [AKPG]: [AKPG] tick=200 mspt=2.36 loaded=792 loaded0=792 loads=167 loadsTotal=167 pylons=46 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=400 mspt=1.01 loaded=291 loaded0=291 loads=18 loadsTotal=185 pylons=4 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=600 mspt=0.81 loaded=291 loaded0=291 loads=0 loadsTotal=185 pylons=4 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=800 mspt=0.81 loaded=291 loaded0=291 loads=0 loadsTotal=185 pylons=4 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1000 mspt=0.80 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1200 mspt=0.76 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1400 mspt=0.31 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1600 mspt=0.35 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1800 mspt=0.28 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=2000 mspt=0.28 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=2200 mspt=0.22 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=2400 mspt=0.25 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=2600 mspt=0.26 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=2800 mspt=0.22 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=3000 mspt=0.20 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=3200 mspt=0.25 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=3400 mspt=0.24 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=3600 mspt=0.21 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=3800 mspt=0.22 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=4000 mspt=0.22 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=4200 mspt=0.23 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=4400 mspt=0.20 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=4600 mspt=0.21 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=4800 mspt=0.23 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=5000 mspt=0.22 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=5200 mspt=0.22 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=5400 mspt=0.23 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=5600 mspt=0.18 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=5800 mspt=0.20 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=6000 mspt=0.56 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=6200 mspt=0.23 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=6400 mspt=0.22 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=6442 mspt=0.18 loaded=256 loaded0=256 loads=0 loadsTotal=185 pylons=3 net=46 prevented=-1
