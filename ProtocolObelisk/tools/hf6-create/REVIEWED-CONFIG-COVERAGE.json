@@ -1,0 +1,60 @@
+{
+  "scope": "reviewed crash-path coverage, not all ATM10 8.2 SERVER configs",
+  "evidence_client": {
+    "minecraft": "1.21.1",
+    "neoforge": "21.1.251",
+    "create": "6.0.10",
+    "hypertube": "0.6.0",
+    "ponder": "1.0.82+mc1.21.1"
+  },
+  "ordered_required_baseline": [
+    "neoforge-server.toml",
+    "create-server.toml",
+    "create_hypertube-server.toml"
+  ],
+  "payload_content": "empty TOML; defaults supplied by installed client specification",
+  "create_value": "AllConfigs.server().kinetics.syncPlayerPickupHitboxWithContraptionHitbox",
+  "create_value_default_in_reviewed_source": false,
+  "new_config_files": [
+    "create-server.toml"
+  ],
+  "not_added": [
+    "create-client.toml",
+    "create-common.toml",
+    "ponder-server.toml"
+  ],
+  "full_pack_coverage_claimed": false,
+  "previous_20_payloads_preserved": true,
+  "source_evidence": [
+    {
+      "file": "PlayerMixin.java",
+      "ref": "mc1.21.1-6.0.10",
+      "git_blob_sha": "93e141a5c324ef5cd20ece11f34bd683a824d0d2",
+      "url": "https://github.com/Creators-of-Create/Create/blob/mc1.21.1-6.0.10/src/main/java/com/simibubi/create/foundation/mixin/PlayerMixin.java"
+    },
+    {
+      "file": "AllConfigs.java",
+      "ref": "mc1.21.1-6.0.10",
+      "git_blob_sha": "3978a2912f334b0d3ff502aa3817bd343d58570d",
+      "url": "https://github.com/Creators-of-Create/Create/blob/mc1.21.1-6.0.10/src/main/java/com/simibubi/create/infrastructure/config/AllConfigs.java"
+    },
+    {
+      "file": "CServer.java",
+      "ref": "mc1.21.1-6.0.10",
+      "git_blob_sha": "4ff528019c532d0cb70ac169377022e899d17c7e",
+      "url": "https://github.com/Creators-of-Create/Create/blob/mc1.21.1-6.0.10/src/main/java/com/simibubi/create/infrastructure/config/CServer.java"
+    },
+    {
+      "file": "CKinetics.java",
+      "ref": "mc1.21.1-6.0.10",
+      "git_blob_sha": "ad5a18065ac7c3cce0547092a0fc7204e7dd2396",
+      "url": "https://github.com/Creators-of-Create/Create/blob/mc1.21.1-6.0.10/src/main/java/com/simibubi/create/infrastructure/config/CKinetics.java"
+    },
+    {
+      "file": "CStress.java",
+      "ref": "mc1.21.1-6.0.10",
+      "git_blob_sha": "12344f66bd4ac846be44d6d217ebf79aec2d263b",
+      "url": "https://github.com/Creators-of-Create/Create/blob/mc1.21.1-6.0.10/src/main/java/com/simibubi/create/infrastructure/config/CStress.java"
+    }
+  ]
+}

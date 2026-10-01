@@ -1,0 +1,17 @@
+Sep 15, 2026 1:13:59 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility ensureRegistered
+INFO: ProMenus Bungee compatibility armed: plugin=ProMenus, outgoingChannel=BungeeCord, routingAuthority=Velocity
+Sep 15, 2026 1:13:59 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility auditMenus
+WARNING: [PROMENUS-TRACE] menuAudit=MISSING menu=LOBBY_FORBIDDEN.yml candidates=[../menus/LOBBIES,menus/LOBBIES]
+Sep 15, 2026 1:13:59 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility auditMenus
+WARNING: [PROMENUS-TRACE] menuAudit=MISSING menu=LOBBY_ATM_BRASIL.yml candidates=[../menus/LOBBIES,menus/LOBBIES]
+Sep 15, 2026 1:13:59 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility lambda$arm$0
+INFO: [PROMENUS-TRACE] HF2 observer armed: commands=[/forbidden, /forbiddenservers, /serversforbidden, /atm, /atmbrasil, /atmservers, /serversatm], syntheticProbe=GetServer, routingMutation=false
+Sep 15, 2026 1:13:59 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility$TraceListener onCommand
+INFO: [PROMENUS-TRACE] menuCommand player=Akashiic command=/forbidden phase=preprocess
+Sep 15, 2026 1:13:59 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility auditMenus
+WARNING: [PROMENUS-TRACE] menuAudit=MISSING menu=LOBBY_FORBIDDEN.yml candidates=[../menus/LOBBIES,menus/LOBBIES]
+Sep 15, 2026 1:13:59 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility auditMenus
+WARNING: [PROMENUS-TRACE] menuAudit=MISSING menu=LOBBY_ATM_BRASIL.yml candidates=[../menus/LOBBIES,menus/LOBBIES]
+Sep 15, 2026 1:13:59 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility sendControlProbe
+INFO: [PROMENUS-TRACE] controlProbe=SENT player=Akashiic plugin=ProMenus channel=BungeeCord subchannel=GetServer bytes=11 command=/forbidden routingMutation=false
+PAPER_HF2_PROBE=PASS bytes=11

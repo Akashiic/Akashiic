@@ -1,0 +1,32 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="atm10_sg_profile_generator"
+version="2.3.1"
+displayName="ATM10 Silent Gear Profile Generator"
+description='''
+Build-only generator for the reviewed ATM10 8.0 ProtocolObelisk payload fixture.
+'''
+
+[[dependencies.atm10_sg_profile_generator]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.247,21.1.248)"
+ordering="NONE"
+side="SERVER"
+
+[[dependencies.atm10_sg_profile_generator]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.21.2)"
+ordering="NONE"
+side="SERVER"
+
+[[dependencies.atm10_sg_profile_generator]]
+modId="silentgear"
+type="required"
+versionRange="[4.2.1.1,4.2.1.2)"
+ordering="AFTER"
+side="SERVER"

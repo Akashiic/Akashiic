@@ -1,0 +1,17 @@
+Sep 15, 2026 1:12:57 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility ensureRegistered
+INFO: ProMenus Bungee compatibility armed: plugin=ProMenus, outgoingChannel=BungeeCord, routingAuthority=Velocity
+Sep 15, 2026 1:12:57 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility auditMenus
+INFO: [PROMENUS-TRACE] menuAudit=FOUND menu=LOBBY_FORBIDDEN.yml path=/mnt/data/hf2work/runtime/menus/LOBBIES/LOBBY_FORBIDDEN.yml bytes=8958 sha256=44a377e98d5989bc24969994e84c76d827471e7ce09aa210bf808dd0a118e069 relevantActions=[176:- '[bungee=forbidden-1]', 177:- '[stop=[sound=BLOCK_ANVIL_LAND][abort]][assert-string-equals] %pinger_isonline_172.18.0.1:25871%|&aOnline']
+Sep 15, 2026 1:12:57 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility auditMenus
+INFO: [PROMENUS-TRACE] menuAudit=FOUND menu=LOBBY_ATM_BRASIL.yml path=/mnt/data/hf2work/runtime/menus/LOBBIES/LOBBY_ATM_BRASIL.yml bytes=9161 sha256=d952c83f5406ee1f9f66ffd7dcc97f3b55cb3dc55b67a7aa587e4b713568fea8 relevantActions=[181:- '[bungee=atm10-normal-1]', 182:- '[stop=[sound=BLOCK_ANVIL_LAND][abort]][assert-string-equals] %pinger_isonline_172.18.0.1:10601%|&aOnline']
+Sep 15, 2026 1:12:57 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility lambda$arm$0
+INFO: [PROMENUS-TRACE] HF2 observer armed: commands=[/forbidden, /forbiddenservers, /serversforbidden, /atm, /atmbrasil, /atmservers, /serversatm], syntheticProbe=GetServer, routingMutation=false
+Sep 15, 2026 1:12:57 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility$TraceListener onCommand
+INFO: [PROMENUS-TRACE] menuCommand player=Akashiic command=/forbidden phase=preprocess
+Sep 15, 2026 1:12:57 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility auditMenus
+INFO: [PROMENUS-TRACE] menuAudit=FOUND menu=LOBBY_FORBIDDEN.yml path=/mnt/data/hf2work/runtime/menus/LOBBIES/LOBBY_FORBIDDEN.yml bytes=8958 sha256=44a377e98d5989bc24969994e84c76d827471e7ce09aa210bf808dd0a118e069 relevantActions=[176:- '[bungee=forbidden-1]', 177:- '[stop=[sound=BLOCK_ANVIL_LAND][abort]][assert-string-equals] %pinger_isonline_172.18.0.1:25871%|&aOnline']
+Sep 15, 2026 1:12:57 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility auditMenus
+INFO: [PROMENUS-TRACE] menuAudit=FOUND menu=LOBBY_ATM_BRASIL.yml path=/mnt/data/hf2work/runtime/menus/LOBBIES/LOBBY_ATM_BRASIL.yml bytes=9161 sha256=d952c83f5406ee1f9f66ffd7dcc97f3b55cb3dc55b67a7aa587e4b713568fea8 relevantActions=[181:- '[bungee=atm10-normal-1]', 182:- '[stop=[sound=BLOCK_ANVIL_LAND][abort]][assert-string-equals] %pinger_isonline_172.18.0.1:10601%|&aOnline']
+Sep 15, 2026 1:12:57 AM br.com.atmbrasil.lobby.paper.ProMenusBungeeCompatibility sendControlProbe
+INFO: [PROMENUS-TRACE] controlProbe=SENT player=Akashiic plugin=ProMenus channel=BungeeCord subchannel=GetServer bytes=11 command=/forbidden routingMutation=false
+PAPER_HF2_PROBE=PASS bytes=11

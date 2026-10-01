@@ -1,0 +1,77 @@
+--- a/velocity-plugin/src/main/java/br/com/atmbrasil/lobby/velocity/BridgeConfig.java
++++ b/velocity-plugin/src/main/java/br/com/atmbrasil/lobby/velocity/BridgeConfig.java
+@@ -74,6 +74,12 @@
+     private static final Pattern RESOURCE_LOCATION = Pattern.compile(
+             "[a-z0-9_.-]+:[a-z0-9/._-]+");
+     private static final List<String> BUILT_IN_ATM_SERVER_CONFIGS = List.of(
++            // NeoForge itself registers a SERVER spec. Capability-only clients do not
++            // select a Silent Gear profile, so namespace derivation is intentionally off.
++            // Keep this reviewed loader filename independent of any modpack fingerprint.
++            // The existing ordered CONFIGURATION prefix sends an empty in-memory TOML;
++            // the client's own spec supplies defaults. Never suppress entity exceptions.
++            "neoforge-server.toml",
+             "securitycraft-server.toml",
+             "productivefarming-server.toml",
+             "bhc-server.toml",
+@@ -276,7 +282,7 @@
+             # Mekanism/generators.toml, Mekanism/generators-gear.toml,
+             # Mekanism/generator-storage.toml and Mekanism/tools.toml.
+             enable-built-in-atm-server-configs=true
+-            transient-server-configs=securitycraft-server.toml,productivefarming-server.toml,bhc-server.toml,utilitarian-server.toml,ars_nouveau/rewind.toml,matc-server.toml
++            transient-server-configs=neoforge-server.toml,securitycraft-server.toml,productivefarming-server.toml,bhc-server.toml,utilitarian-server.toml,ars_nouveau/rewind.toml,matc-server.toml
+ 
+             # A real NeoForge server syncs every registered SERVER config. Paper cannot list
+             # them, so derive the conventional <network-namespace>-server.toml candidates from
+--- a/velocity-plugin/src/test/java/br/com/atmbrasil/lobby/velocity/ConfigurationPersistenceTest.java
++++ b/velocity-plugin/src/test/java/br/com/atmbrasil/lobby/velocity/ConfigurationPersistenceTest.java
+@@ -60,6 +60,7 @@
+         assertEquals(65_536, config.maximumRegistryShimBytes());
+         assertEquals(
+                 List.of(
++                        "neoforge-server.toml",
+                         "securitycraft-server.toml",
+                         "productivefarming-server.toml",
+                         "bhc-server.toml",
+@@ -193,7 +194,7 @@
+                 .contains("enable-built-in-ae2-jei-session-optimization=true"));
+         assertTrue(Files.readString(
+                 temporaryDirectory.resolve("bridge.properties"), StandardCharsets.UTF_8)
+-                .contains("transient-server-configs=securitycraft-server.toml,"
++                .contains("transient-server-configs=neoforge-server.toml,securitycraft-server.toml,"
+                         + "productivefarming-server.toml,bhc-server.toml,"
+                         + "utilitarian-server.toml,ars_nouveau/rewind.toml,"
+                         + "matc-server.toml"));
+@@ -341,6 +342,7 @@
+ 
+         assertEquals(
+                 List.of(
++                        "neoforge-server.toml",
+                         "securitycraft-server.toml",
+                         "productivefarming-server.toml",
+                         "bhc-server.toml",
+@@ -837,6 +839,7 @@
+                 "securitycraft-server.toml,example-server.toml,example/nested/config.toml"));
+         assertEquals(
+                 List.of(
++                        "neoforge-server.toml",
+                         "securitycraft-server.toml",
+                         "productivefarming-server.toml",
+                         "bhc-server.toml",
+@@ -1409,7 +1412,7 @@
+ 
+         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
+ 
+-        assertEquals(16, loaded.transientServerConfigs().size());
++        assertEquals(17, loaded.transientServerConfigs().size());
+         assertEquals(1L, loaded.transientServerConfigs().stream()
+                 .filter(config -> config.equals("Mekanism/general.toml"))
+                 .count());
+@@ -1425,7 +1428,7 @@
+         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
+ 
+         assertFalse(loaded.enableBuiltInMekanismCompatibility());
+-        assertEquals(6, loaded.transientServerConfigs().size());
++        assertEquals(7, loaded.transientServerConfigs().size());
+         assertTrue(loaded.transientServerConfigs().contains("matc-server.toml"));
+         assertTrue(loaded.transientServerConfigs().stream()
+                 .noneMatch(config -> config.startsWith("Mekanism/")));

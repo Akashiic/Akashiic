@@ -1,0 +1,284 @@
+package br.com.atmbrasil.lobby.velocity;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+/** Resolves reviewed, versioned registry shims; arbitrary operator-provided payloads are forbidden. */
+final class RegistryShimCatalog {
+    static final String FORBIDDEN_ARCANUS_2_6_1 =
+            ForbiddenArcanusItemModifierRegistry.SHIM_ID;
+    static final String ARS_NOUVEAU_5_11_3 =
+            ArsNouveauEnchantmentRegistry.SHIM_ID;
+    static final String AD_ASTRA_GISELLE_8_1 =
+            AdAstraGiselleEnchantmentRegistry.SHIM_ID;
+    static final String IRONS_SPELLBOOKS_ATM10_8_1 =
+            Atm10Normal81IronsSpellbooksRegistry.SHIM_ID;
+    static final String FULL_ENCHANTMENT_ATM10_8_1 =
+            Atm10Normal81EnchantmentRegistry.SHIM_ID;
+    static final String NEOVITAE_SENTIENT_ATM10_8_1 =
+            Atm10Normal81NeoVitaeSentientClosure.SHIM_ID;
+    private static final List<String> BUILT_IN_ATM_SHIMS = List.of(
+            FORBIDDEN_ARCANUS_2_6_1,
+            ARS_NOUVEAU_5_11_3,
+            AD_ASTRA_GISELLE_8_1,
+            IRONS_SPELLBOOKS_ATM10_8_1,
+            FULL_ENCHANTMENT_ATM10_8_1,
+            NEOVITAE_SENTIENT_ATM10_8_1);
+
+    private RegistryShimCatalog() {
+    }
+
+    static List<RegistryShimPacket> resolve(List<String> shimIds, int maximumPacketBytes) {
+        Objects.requireNonNull(shimIds, "shimIds");
+        List<RegistryShimPacket> packets = new ArrayList<>();
+        for (String shimId : shimIds) {
+            if (shimId.equals(FORBIDDEN_ARCANUS_2_6_1)) {
+                packets.add(ForbiddenArcanusItemModifierRegistry.packet(maximumPacketBytes));
+            } else if (shimId.equals(ARS_NOUVEAU_5_11_3)) {
+                packets.add(ArsNouveauEnchantmentRegistry.packet(maximumPacketBytes));
+            } else if (shimId.equals(AD_ASTRA_GISELLE_8_1)) {
+                packets.add(AdAstraGiselleEnchantmentRegistry.packet(maximumPacketBytes));
+            } else if (shimId.equals(IRONS_SPELLBOOKS_ATM10_8_1)) {
+                packets.add(Atm10Normal81IronsSpellbooksRegistry.packet(maximumPacketBytes));
+            } else if (shimId.equals(FULL_ENCHANTMENT_ATM10_8_1)) {
+                Atm10Normal81EnchantmentRegistry
+                        .runtimeResolution(maximumPacketBytes)
+                        .packet()
+                        .ifPresent(packets::add);
+            } else if (shimId.equals(NEOVITAE_SENTIENT_ATM10_8_1)) {
+                Atm10Normal81NeoVitaeSentientClosure
+                        .runtimeResolution(maximumPacketBytes)
+                        .closure()
+                        .map(Atm10Normal81NeoVitaeSentientClosure.Closure::packet)
+                        .ifPresent(packets::add);
+            } else {
+                throw new IllegalArgumentException("unsupported registry shim: " + shimId);
+            }
+        }
+        return List.copyOf(packets);
+    }
+
+    static List<String> builtInAtmShimIds() {
+        return BUILT_IN_ATM_SHIMS;
+    }
+
+    static boolean isSupported(String shimId) {
+        return BUILT_IN_ATM_SHIMS.contains(shimId);
+    }
+
+    /** Runtime diagnostic for a quarantined full-enchantment resource or packet budget. */
+    static Optional<Throwable> fullEnchantmentQuarantineFailure(int maximumPacketBytes) {
+        return Atm10Normal81EnchantmentRegistry
+                .runtimeResolution(maximumPacketBytes)
+                .quarantineFailure();
+    }
+
+    /** Runtime diagnostic for the atomic NeoVitae registry-and-tags closure. */
+    static Optional<Throwable> neoVitaeSentientQuarantineFailure(int maximumPacketBytes) {
+        return Atm10Normal81NeoVitaeSentientClosure
+                .runtimeResolution(maximumPacketBytes)
+                .quarantineFailure();
+    }
+
+    private static List<RegistryShimPacket> selectApplicable(
+            List<RegistryShimPacket> packets,
+            Collection<String> advertisedNamespaces) {
+        Objects.requireNonNull(packets, "packets");
+        Objects.requireNonNull(advertisedNamespaces, "advertisedNamespaces");
+        Set<String> namespaces = new LinkedHashSet<>(advertisedNamespaces);
+        return packets.stream()
+                .filter(packet -> packet.appliesTo(namespaces))
+                .toList();
+    }
+
+    /**
+     * Selects registry extensions only behind exact structural evidence.
+     *
+     * <p>The two sources are mutually exclusive: combining them would duplicate registry IDs in
+     * ATM10 Normal. A reviewed embedded profile is already exact structural evidence: its dynamic
+     * registry transaction wins when present, otherwise its advertised namespaces may narrow the
+     * applicable reviewed legacy shims. An adaptive session without such a profile must prove the
+     * exact ATM10 Normal 8.1 full-client contract before its legacy shims are eligible. A separate
+     * observed ATM10 8.2 contract can select only the byte-pinned Forbidden Arcanus 2.6.1 registry;
+     * it cannot select any other 8.1 data. Namespace advertisement alone is never sufficient.</p>
+     */
+    static List<RegistryShimPacket> selectForProfile(
+            SilentGearEmbeddedProfile profile,
+            List<RegistryShimPacket> legacyPackets,
+            Collection<String> advertisedNamespaces,
+            String fullClientContractSha256) {
+        return selectForProfile(
+                Atm10Normal81EnchantmentRegistry.PROTOCOL_VERSION,
+                profile,
+                legacyPackets,
+                advertisedNamespaces,
+                fullClientContractSha256);
+    }
+
+    /**
+     * Protocol-explicit selection seam for adaptive clients.
+     *
+     * <p>The four-argument compatibility overload is safe only because the exact client contract
+     * it accepts was observed on protocol 767. New callers should pass the negotiated protocol to
+     * this method so the structural predicate remains independently auditable.</p>
+     */
+    static List<RegistryShimPacket> selectForProfile(
+            int clientProtocol,
+            SilentGearEmbeddedProfile profile,
+            List<RegistryShimPacket> legacyPackets,
+            Collection<String> advertisedNamespaces,
+            String fullClientContractSha256) {
+        Objects.requireNonNull(legacyPackets, "legacyPackets");
+        Objects.requireNonNull(advertisedNamespaces, "advertisedNamespaces");
+        if (profile != null && !profile.dynamicRegistries().isEmpty()) {
+            List<RegistryShimPacket> packets = profile.dynamicRegistries().packets();
+            requireUniqueRegistryIds(packets);
+            return packets;
+        }
+        if (profile != null) {
+            List<RegistryShimPacket> selected =
+                    selectApplicable(legacyPackets, advertisedNamespaces);
+            requireUniqueRegistryIds(selected);
+            return selected;
+        }
+        // A separately reviewed 8.2 session may receive only the unchanged 2.6.1 item-modifier
+        // registry. This is not a full-pack profile, recipe proof, or admission condition.
+        if (Atm10Normal82ArcanusEvidence.matches(
+                clientProtocol, fullClientContractSha256, advertisedNamespaces)) {
+            return Atm10Normal82ArcanusEvidence.selectReviewed(legacyPackets);
+        }
+        if (clientProtocol != Atm10Normal81EnchantmentRegistry.PROTOCOL_VERSION
+                || !Atm10Normal81EnchantmentRegistry.FULL_CLIENT_CONTRACT_SHA256
+                        .equals(fullClientContractSha256)) {
+            return List.of();
+        }
+
+        Set<String> namespaces = new LinkedHashSet<>(advertisedNamespaces);
+        List<RegistryShimPacket> selected = legacyPackets.stream()
+                .filter(packet -> !isPartialEnchantmentShim(packet))
+                // The full enchantment packet is a Paper-registry replacement, never a tail.
+                .filter(packet -> !packet.shimId().equals(FULL_ENCHANTMENT_ATM10_8_1))
+                // The exact full-client contract proves NeoVitae even though the mod does not
+                // need to advertise a network channel in order to own a data-pack registry.
+                .filter(packet -> packet.shimId().equals(NEOVITAE_SENTIENT_ATM10_8_1)
+                        || packet.appliesTo(namespaces))
+                .toList();
+        requireUniqueRegistryIds(selected);
+        return selected;
+    }
+
+    /**
+     * Selects the exact packet which must replace Paper's {@code minecraft:enchantment} packet.
+     *
+     * <p>Minecraft 1.21.1's client collector appends repeated registry packets. Consequently the
+     * full ATM10 packet is never wire-safe as an injected tail: the outbound Paper packet must be
+     * suppressed and this packet written in its place. Selection is structural enrichment only;
+     * an absent or inapplicable replacement never denies admission.</p>
+     */
+    static Optional<RegistryShimPacket> selectPaperRegistryReplacement(
+            int clientProtocol,
+            List<RegistryShimPacket> candidates,
+            String fullClientContractSha256) {
+        Objects.requireNonNull(candidates, "candidates");
+        if (clientProtocol != Atm10Normal81EnchantmentRegistry.PROTOCOL_VERSION
+                || !Atm10Normal81EnchantmentRegistry.FULL_CLIENT_CONTRACT_SHA256
+                        .equals(fullClientContractSha256)) {
+            return Optional.empty();
+        }
+
+        List<RegistryShimPacket> relevant = candidates.stream()
+                .filter(packet -> !isPartialEnchantmentShim(packet))
+                .filter(packet -> packet.shimId().equals(FULL_ENCHANTMENT_ATM10_8_1)
+                        || packet.registryId().equals(
+                                Atm10Normal81EnchantmentRegistry.REGISTRY_ID))
+                .toList();
+        if (relevant.isEmpty()) {
+            return Optional.empty();
+        }
+        if (relevant.size() != 1) {
+            throw new IllegalArgumentException(
+                    "Paper registry replacement contains duplicate registry id: "
+                            + Atm10Normal81EnchantmentRegistry.REGISTRY_ID);
+        }
+        RegistryShimPacket packet = relevant.getFirst();
+        if (!packet.shimId().equals(FULL_ENCHANTMENT_ATM10_8_1)
+                || !packet.registryId().equals(
+                        Atm10Normal81EnchantmentRegistry.REGISTRY_ID)) {
+            throw new IllegalArgumentException(
+                    "Paper enchantment replacement identity is not reviewed");
+        }
+        return Optional.of(packet);
+    }
+
+    /**
+     * Selects the tags paired with the already-selected registry transaction.
+     *
+     * <p>The ATM10 8.1 NeoVitae packet and tags are validated and quarantined atomically. A
+     * synthetic or conflicting packet cannot acquire the reviewed tag proof merely by reusing an
+     * identifier.</p>
+     */
+    static EmbeddedRegistryTagsProfile selectTagsForTransaction(
+            int clientProtocol,
+            SilentGearEmbeddedProfile profile,
+            List<RegistryShimPacket> selectedPackets,
+            String fullClientContractSha256) {
+        Objects.requireNonNull(selectedPackets, "selectedPackets");
+        if (profile != null) {
+            return profile.dynamicRegistryTags();
+        }
+        if (!Atm10Normal81Contract.matchesStructuralIdentity(
+                clientProtocol, fullClientContractSha256)) {
+            return EmbeddedRegistryTagsProfile.empty();
+        }
+
+        List<RegistryShimPacket> relevant = selectedPackets.stream()
+                .filter(packet -> packet.shimId().equals(NEOVITAE_SENTIENT_ATM10_8_1)
+                        || packet.registryId().equals(
+                                Atm10Normal81NeoVitaeSentientClosure.REGISTRY_ID))
+                .toList();
+        if (relevant.isEmpty()) {
+            return EmbeddedRegistryTagsProfile.empty();
+        }
+        if (relevant.size() != 1) {
+            throw new IllegalArgumentException(
+                    "NeoVitae sentient transaction contains duplicate registry identity");
+        }
+
+        Atm10Normal81NeoVitaeSentientClosure.RuntimeResolution resolution =
+                Atm10Normal81NeoVitaeSentientClosure.runtimeResolution(1_048_576);
+        if (resolution.closure().isEmpty()) {
+            return EmbeddedRegistryTagsProfile.empty();
+        }
+        Atm10Normal81NeoVitaeSentientClosure.Closure closure =
+                resolution.closure().orElseThrow();
+        RegistryShimPacket selected = relevant.getFirst();
+        if (!RegistryShimReceipt.from(selected).equals(
+                RegistryShimReceipt.from(closure.packet()))) {
+            throw new IllegalArgumentException(
+                    "NeoVitae sentient registry differs from the reviewed tag closure");
+        }
+        return closure.tags();
+    }
+
+    private static boolean isPartialEnchantmentShim(RegistryShimPacket packet) {
+        return packet.shimId().equals(ARS_NOUVEAU_5_11_3)
+                || packet.shimId().equals(AD_ASTRA_GISELLE_8_1);
+    }
+
+    private static void requireUniqueRegistryIds(List<RegistryShimPacket> packets) {
+        LinkedHashSet<String> registryIds = new LinkedHashSet<>();
+        for (RegistryShimPacket packet : packets) {
+            Objects.requireNonNull(packet, "registry shim packet");
+            if (!registryIds.add(packet.registryId())) {
+                throw new IllegalArgumentException(
+                        "selected registry transaction contains duplicate registry id: "
+                                + packet.registryId());
+            }
+        }
+    }
+}

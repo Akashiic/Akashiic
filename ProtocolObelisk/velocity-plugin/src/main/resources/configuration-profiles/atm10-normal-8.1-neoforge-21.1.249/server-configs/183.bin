@@ -1,0 +1,5 @@
+bhc-server.toml‰[Server]
+	#Allow Starting Health Tweaks
+	allowStartingHealthTweaks = false
+	#Starting Health of Player (Default:20)
+	startingHealth = 20

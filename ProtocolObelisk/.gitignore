@@ -1,0 +1,8 @@
+.gradle/
+build/
+dist/
+*.class
+__pycache__/
+*.pyc
+# Generated compatibility packs are operator artifacts; keep them out of source control.
+*.obpack

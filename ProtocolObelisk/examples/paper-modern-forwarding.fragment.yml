@@ -1,0 +1,6 @@
+# config/paper-global.yml do lobby; use o conteúdo real de forwarding.secret.
+proxies:
+  velocity:
+    enabled: true
+    online-mode: true
+    secret: "SUBSTITUA-PELO-SEGREDO-REAL"

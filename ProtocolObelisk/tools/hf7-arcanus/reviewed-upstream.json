@@ -1,0 +1,53 @@
+{
+  "repository": "stal111/Forbidden-Arcanus",
+  "commit": "f62af610d550e0d033f6c5cd166e40062638c44b",
+  "retrieval": "GitHub connector; source read, not installed client binary execution",
+  "scope": "F&A 2.6.1, item_modifier definition and lookup only",
+  "sources": [
+    {
+      "path": "gradle.properties",
+      "git_blob_sha1": "c14e40e62a5eeb0523294c5bb1b0d6007bff3b3e",
+      "url": "https://github.com/stal111/Forbidden-Arcanus/blob/f62af610d550e0d033f6c5cd166e40062638c44b/gradle.properties"
+    },
+    {
+      "path": "neoforge/src/main/java/com/stal111/forbidden_arcanus/core/mixin/PlayerMixin.java",
+      "git_blob_sha1": "837fade296e025b5b60119a46d6f0e2f7df86bf8",
+      "url": "https://github.com/stal111/Forbidden-Arcanus/blob/f62af610d550e0d033f6c5cd166e40062638c44b/neoforge/src/main/java/com/stal111/forbidden_arcanus/core/mixin/PlayerMixin.java"
+    },
+    {
+      "path": "neoforge/src/main/java/com/stal111/forbidden_arcanus/data/ModItemModifiers.java",
+      "git_blob_sha1": "21b41372e714450416ba00352f89112fdaf0be1f",
+      "url": "https://github.com/stal111/Forbidden-Arcanus/blob/f62af610d550e0d033f6c5cd166e40062638c44b/neoforge/src/main/java/com/stal111/forbidden_arcanus/data/ModItemModifiers.java"
+    },
+    {
+      "path": "neoforge/src/main/java/com/stal111/forbidden_arcanus/common/item/modifier/ItemModifier.java",
+      "git_blob_sha1": "f713b9890cf5e2b2f9193f7e8c59e1cde3f6862d",
+      "url": "https://github.com/stal111/Forbidden-Arcanus/blob/f62af610d550e0d033f6c5cd166e40062638c44b/neoforge/src/main/java/com/stal111/forbidden_arcanus/common/item/modifier/ItemModifier.java"
+    },
+    {
+      "path": "neoforge/src/main/java/com/stal111/forbidden_arcanus/core/registry/FARegistries.java",
+      "git_blob_sha1": "4397436c2cb479b32a60de118ed23f9ac9f8da05",
+      "url": "https://github.com/stal111/Forbidden-Arcanus/blob/f62af610d550e0d033f6c5cd166e40062638c44b/neoforge/src/main/java/com/stal111/forbidden_arcanus/core/registry/FARegistries.java"
+    },
+    {
+      "path": "neoforge/src/main/java/com/stal111/forbidden_arcanus/ForbiddenArcanus.java",
+      "git_blob_sha1": "ca603c4ddb9edddaa4439456443d6e5f7d111d34",
+      "url": "https://github.com/stal111/Forbidden-Arcanus/blob/f62af610d550e0d033f6c5cd166e40062638c44b/neoforge/src/main/java/com/stal111/forbidden_arcanus/ForbiddenArcanus.java"
+    },
+    {
+      "path": "neoforge/src/main/java/com/stal111/forbidden_arcanus/ModEventHandler.java",
+      "git_blob_sha1": "8db9e04b44161edda147f3cc59ff17e4cbec3074",
+      "url": "https://github.com/stal111/Forbidden-Arcanus/blob/f62af610d550e0d033f6c5cd166e40062638c44b/neoforge/src/main/java/com/stal111/forbidden_arcanus/ModEventHandler.java"
+    },
+    {
+      "path": "neoforge/src/main/java/com/stal111/forbidden_arcanus/common/network/NetworkEvents.java",
+      "git_blob_sha1": "c5ffd48c6a9325e08dc25c987d1f0487fb2b8400",
+      "url": "https://github.com/stal111/Forbidden-Arcanus/blob/f62af610d550e0d033f6c5cd166e40062638c44b/neoforge/src/main/java/com/stal111/forbidden_arcanus/common/network/NetworkEvents.java"
+    }
+  ],
+  "limitations": [
+    "No SHA comparison against the installed F&A JAR",
+    "No complete ATM10 8.2 registry/datapack capture",
+    "No real Minecraft/NeoForge codec execution"
+  ]
+}

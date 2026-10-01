@@ -1,0 +1,6 @@
+2create_dragons_plus-aether-integration-server.toml±#.
+#If Bulk Enchanting for The Aether Altar should be enabled
+enableBulkEnchanting = true
+#.
+#If Bulk Enchanting can incubate The Aether Moa Eggs
+enableBulkMoaIncubation = true

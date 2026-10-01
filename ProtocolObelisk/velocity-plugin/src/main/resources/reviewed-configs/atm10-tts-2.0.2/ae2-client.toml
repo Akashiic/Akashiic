@@ -1,0 +1,33 @@
+[recipeViewers]
+disableColoredCableRecipesInRecipeViewer = true
+enableFacadesInRecipeViewer = true
+enableFacadeRecipesInRecipeViewer = true
+provideNetworkInventoryToEmi = false
+
+[client]
+enableEffects = true
+useTerminalUseLargeFont = false
+useColoredCraftingStatus = true
+powerUnit = "AE"
+showDebugGuiOverlays = false
+showPlacementPreview = true
+notifyForFinishedCraftingJobs = true
+
+[terminals]
+terminalStyle = "SMALL"
+pinAutoCraftedItems = true
+clearGridOnClose = false
+terminalMargin = 25
+
+[search]
+searchModNameInTooltips = false
+useExternalSearch = false
+clearExternalSearchOnOpen = true
+syncWithExternalSearch = true
+rememberLastSearch = true
+autoFocusSearch = false
+
+[tooltips]
+showCellUpgrades = true
+showCellContent = true
+maxCellContentShown = 5

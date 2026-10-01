@@ -1,0 +1,22 @@
+{
+  "review_method": "Exact 1.21.1-1.11.4 branch source read through GitHub connector; no local ElevatorMod binary execution",
+  "repository": "VsnGamer/ElevatorMod",
+  "commit": "129614f8e54de6ddca3c5db757fa8ebc33f40a9d",
+  "files": {
+    "gradle.properties": "511b7241e8518155cb2e08bd970d8430bdc34a9a",
+    "common/src/main/java/com/vsngarcia/ElevatorHandler.java": "9e9860e9d697a53d49bd890886c271855022a547",
+    "neoforge/src/main/java/com/vsngarcia/neoforge/ElevatorModNeoForge.java": "e4afed1c8db17707b125d3376beb195b80ef1289",
+    "common/src/main/java/com/vsngarcia/Config.java": "d709c858dd6451453978fae3d3962c63a6b2db8c"
+  },
+  "registration": "container.registerConfig(ModConfig.Type.SERVER, Config.SPEC)",
+  "filename": "elevatorid-server.toml",
+  "failing_access": "Config.GENERAL.activationRange.getAsInt() before block lookup on jump/sneak input",
+  "schema_default_activationRange": 6,
+  "schema_default_range": 384,
+  "values_injected_by_this_patch": {},
+  "local_binary_download": "Not obtained: container public HTTP attempt failed DNS resolution",
+  "sources": [
+    "https://github.com/VsnGamer/ElevatorMod/tree/129614f8e54de6ddca3c5db757fa8ebc33f40a9d",
+    "https://docs.neoforged.net/docs/1.21.1/misc/config/"
+  ]
+}

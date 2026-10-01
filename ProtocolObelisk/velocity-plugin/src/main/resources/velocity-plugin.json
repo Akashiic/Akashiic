@@ -1,0 +1,9 @@
+{
+  "id": "protocolobelisk",
+  "main": "br.com.atmbrasil.lobby.velocity.Atm10LobbyVelocityPlugin",
+  "name": "ProtocolObelisk",
+  "version": "${version}",
+  "description": "Lobby-first NeoForge 1.21.1 bridge with reviewed offline BlockState translation",
+  "authors": ["ATM Brasil"],
+  "dependencies": []
+}

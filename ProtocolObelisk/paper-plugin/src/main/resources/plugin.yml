@@ -1,0 +1,29 @@
+name: ProtocolObelisk
+version: ${version}
+main: br.com.atmbrasil.lobby.paper.Atm10LobbyPaperPlugin
+description: Protocol-only Paper/Purpur lobby endpoint; Velocity retains all routing authority
+author: ATM Brasil
+prefix: ProtocolObelisk
+provides: [Atm10LobbyBridge]
+api-version: '1.21'
+load: POSTWORLD
+softdepend: [TAB]
+commands:
+  protocolobelisk:
+    description: Administração do ProtocolObelisk
+    usage: /protocolobelisk reload|status
+    permission: protocolobelisk.admin
+permissions:
+  protocolobelisk.admin:
+    default: op
+  protocolobelisk.build:
+    description: Ignora as restrições de segurança para visitantes no lobby
+    default: op
+  atm10lobby.admin:
+    description: Permissão administrativa legada; use protocolobelisk.admin
+    default: op
+    children:
+      protocolobelisk.admin: true
+  atm10lobby.build:
+    description: Permissão de construção legada; use protocolobelisk.build
+    default: op

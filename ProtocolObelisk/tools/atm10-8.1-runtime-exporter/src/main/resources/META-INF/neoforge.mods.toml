@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="protocolobelisk_atm10_81_exporter"
+version="1.0.0"
+displayName="ProtocolObelisk ATM10 8.1 Runtime Exporter"
+description='''
+Build-only pure-NeoForge exporter for the reviewed ATM10 8.1 registry and BlockState evidence.
+'''
+
+[[dependencies.protocolobelisk_atm10_81_exporter]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.249,21.1.250)"
+ordering="NONE"
+side="SERVER"
+
+[[dependencies.protocolobelisk_atm10_81_exporter]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.21.2)"
+ordering="NONE"
+side="SERVER"

@@ -1,0 +1,290 @@
+# -------------------------------------------------------------------- #
+#                                                                      #
+#                    REDE AKASHIC - ATM BRASIL                         #
+#                         ProMenus 1.17                                #
+#                                                                      #
+# -------------------------------------------------------------------- #
+#
+# STATUS ATUAL:
+#   %pinger_isonline_172.18.0.1:10601%
+#
+# Retornos confirmados da expansão Pinger:
+#   &aOnline  -> ONLINE
+#   &cOffline -> OFFLINE
+#
+# O estado &eReiniciando está preparado de forma segura, porém a
+# expansão Pinger não produz esse terceiro retorno por conta própria.
+# Até existir uma fonte real de reinício, ele permanecerá inativo.
+#
+# O Pinger define o estado visual e o feedback secundário. A autoridade
+# de transferência permanece no Velocity; o [bungee] é enviado antes do
+# assert para preservar o fluxo nativo do ProMenus 1.17.
+#
+# DESTINO NO VELOCITY:
+#   atm10-normal-1
+#
+# -------------------------------------------------------------------- #
+
+enabled: true
+
+name: '{#006B3C}&l✦ {#FFDF00}&lATM {#009C3B}&lBRASIL {#006B3C}&l✦'
+
+size: 54
+editable: true
+clone_items: true
+
+aliases: ["atm", "atmbrasil", "atmservers", "serversatm"]
+commands: ["atm", "atmbrasil", "atmservers", "serversatm"]
+
+open_actions:
+  - '[sound] BLOCK_CHEST_OPEN'
+
+settings:
+  click_limit: 3
+  click_limit_message: '{#009C3B}&lATM BRASIL {#6E6E6E}» {#D0D0D0}Não clique tão rápido.'
+  click_limit_duration: 1000
+  delay_between_clicks: 250
+  open_delay: 100
+
+items:
+
+  # ==================================================================
+  # MOLDURA EXTERNA
+  # Somente a borda do inventário; o servidor permanece isolado.
+  # ==================================================================
+
+  'FRAME-CORNERS':
+    slots: [0,8,45,53]
+    animated: false
+    material: YELLOW_STAINED_GLASS_PANE
+    data: 0
+    amount: 1
+    name: '&r'
+    lore: []
+    actions: []
+
+  'FRAME-TOP':
+    slots: [1,2,3,5,6,7]
+    animated: false
+    material: GREEN_STAINED_GLASS_PANE
+    data: 0
+    amount: 1
+    name: '&r'
+    lore: []
+    actions: []
+
+  'FRAME-SIDES':
+    slots: [9,17,18,26,27,35,36,44]
+    animated: false
+    material: GREEN_STAINED_GLASS_PANE
+    data: 0
+    amount: 1
+    name: '&r'
+    lore: []
+    actions: []
+
+  'FRAME-BOTTOM':
+    slots: [46,47,48,50,51,52]
+    animated: false
+    material: GREEN_STAINED_GLASS_PANE
+    data: 0
+    amount: 1
+    name: '&r'
+    lore: []
+    actions: []
+
+  'FRAME-BOTTOM-ACCENT':
+    slot: 49
+    animated: false
+    material: BLUE_STAINED_GLASS_PANE
+    data: 0
+    amount: 1
+    name: '&r'
+    lore: []
+    actions: []
+
+
+  # ==================================================================
+  # TÍTULO
+  # slot 4 = quinto espaço visual da primeira linha
+  # ==================================================================
+
+  'TITLE':
+    slot: 4
+    animated: false
+    material: NETHER_STAR
+    data: 0
+    amount: 1
+    glow: true
+
+    name: '{#006B3C}&l✦ {#FFDF00}&lSELECIONE SEU SERVIDOR {#006B3C}&l✦'
+
+    lore:
+      - ''
+      - '{#E8E8E8}Escolha abaixo o seu próximo destino.'
+      - '{#009C3B}Status {#777777}e {#FFDF00}população {#777777}são atualizados automaticamente.'
+      - ''
+      - '{#009C3B}&lATM {#FFDF00}&lBRASIL {#002776}◆ {#FFFFFF}Rede Akashic'
+      - ''
+
+    actions: []
+
+
+  # ==================================================================
+  # ATM BRASIL
+  # Botão isolado no slot 22, seguindo exatamente o posicionamento
+  # aprovado no menu anterior.
+  # ==================================================================
+
+  'ATM-BRASIL':
+    slot: 22
+
+    active: '%pinger_isonline_172.18.0.1:10601%'
+
+    animated: false
+
+    # ---------------------------------------------------------------
+    # FALLBACK DE SEGURANÇA
+    # Usado somente para retorno inesperado ou placeholder não
+    # processado. Não permite conexão.
+    # ---------------------------------------------------------------
+
+    material: BARRIER
+    data: 0
+    amount: 1
+    glow: false
+
+    name: '{#FFDF00}&l● {#FFFFFF}&lATM BRASIL'
+
+    lore:
+      - ''
+      - '{#555555}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+      - ''
+      - '{#FFDF00}&l⚠ STATUS INDISPONÍVEL'
+      - ''
+      - '{#B5B5B5}Não foi possível confirmar o estado'
+      - '{#B5B5B5}do servidor neste momento.'
+      - ''
+      - '{#808080}A conexão foi bloqueada por segurança.'
+      - ''
+      - '{#555555}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+      - ''
+
+    # ---------------------------------------------------------------
+    # COMPATIBILIDADE DE TRANSFERÊNCIA
+    # O [bungee] vem primeiro para preservar o fluxo nativo conhecido do
+    # ProMenus/Velocity. O Pinger continua servindo ao estado visual e ao
+    # feedback secundário; ele não é autoridade de roteamento.
+    # ---------------------------------------------------------------
+
+    actions:
+      - '[bungee=atm10-normal-1]'
+      - '[stop=[sound=BLOCK_ANVIL_LAND][abort]][assert-string-equals] %pinger_isonline_172.18.0.1:10601%|&aOnline'
+      - '[sound] ENTITY_ENDERMAN_TELEPORT'
+      - '[close-inventory]'
+
+    states:
+
+      # -------------------------------------------------------------
+      # ONLINE
+      # -------------------------------------------------------------
+
+      '&aOnline':
+        animated: false
+        material: LIME_DYE
+        data: 0
+        amount: 1
+        glow: true
+
+        name: '{#006B3C}&l[{#FFDF00}&lATM{#006B3C}&l] {#FFFFFF}&lBRASIL'
+
+        lore:
+          - ''
+          - '{#006B3C}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''
+          - '{#009C3B}&l✦ SERVIDOR PRINCIPAL'
+          - ''
+          - '{#E0E0E0}A experiência brasileira definitiva'
+          - '{#E0E0E0}de All The Mods 10.'
+          - ''
+          - '{#7A7A7A}Versão: {#FFFFFF}1.21.1'
+          - '{#7A7A7A}Modpack: {#FFDF00}All The Mods 10'
+          - '{#7A7A7A}Modalidade: {#009C3B}Modded Survival'
+          - '{#7A7A7A}Jogadores online: {#43FF72}&l%pinger_players_172.18.0.1:10601%'
+          - ''
+          - '{#43FF72}● {#C8C8C8}Status: {#43FF72}&lONLINE'
+          - ''
+          - '{#FFDF00}&l➜ CLIQUE PARA CONECTAR'
+          - '{#8F8F8F}Construa, evolua e conquiste.'
+          - ''
+          - '{#006B3C}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''
+
+      # -------------------------------------------------------------
+      # OFFLINE
+      # Não exibe população, evitando apresentar 0 como leitura real.
+      # -------------------------------------------------------------
+
+      '&cOffline':
+        animated: false
+        material: GRAY_DYE
+        data: 0
+        amount: 1
+        glow: false
+
+        name: '{#4F4F4F}&l[{#8A8A8A}&lATM{#4F4F4F}&l] {#BDBDBD}&lBRASIL'
+
+        lore:
+          - ''
+          - '{#444444}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''
+          - '{#8B8B8B}&l✦ SERVIDOR PRINCIPAL'
+          - ''
+          - '{#A5A5A5}A experiência brasileira definitiva'
+          - '{#A5A5A5}de All The Mods 10.'
+          - ''
+          - '{#777777}Versão: {#E7E7E7}1.21.1'
+          - '{#777777}Modpack: {#CFCFCF}All The Mods 10'
+          - '{#777777}Modalidade: {#CFCFCF}Modded Survival'
+          - ''
+          - '{#777777}● {#AFAFAF}Status: {#777777}&lOFFLINE'
+          - ''
+          - '{#8A8A8A}O servidor está indisponível para'
+          - '{#8A8A8A}conexões neste momento.'
+          - ''
+          - '{#686868}Tente novamente em alguns instantes.'
+          - ''
+          - '{#444444}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''
+
+      # -------------------------------------------------------------
+      # REINICIANDO
+      # Estado visual preparado. O Pinger atual não retorna esse valor
+      # automaticamente; ele exige uma fonte externa de terceiro estado.
+      # -------------------------------------------------------------
+
+      '&eReiniciando':
+        animated: false
+        material: YELLOW_DYE
+        data: 0
+        amount: 1
+        glow: true
+
+        name: '{#006B3C}&l[{#FFDF00}&lATM{#006B3C}&l] {#FFFFFF}&lBRASIL'
+
+        lore:
+          - ''
+          - '{#B59A00}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''
+          - '{#FFDF00}&l⟳ SERVIDOR REINICIANDO'
+          - ''
+          - '{#D8D8D8}O ATM Brasil está sendo preparado'
+          - '{#D8D8D8}para receber novas conexões.'
+          - ''
+          - '{#FFDF00}● {#D0D0D0}Status: {#FFDF00}&lREINICIANDO'
+          - ''
+          - '{#9A9A9A}Aguarde alguns instantes antes'
+          - '{#9A9A9A}de tentar entrar novamente.'
+          - ''
+          - '{#B59A00}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''

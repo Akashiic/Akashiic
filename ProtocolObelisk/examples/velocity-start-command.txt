@@ -1,0 +1,1 @@
+java -Dvelocity.max-known-packs=512 -Dvelocity.max-plugin-message-payload-size.serverbound=1048576 -Dvelocity.max-plugin-message-payload-size.clientbound=8388602 -jar server.jar

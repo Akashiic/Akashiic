@@ -1,0 +1,284 @@
+# -------------------------------------------------------------------- #
+#                                                                      #
+#                 REDE AKASHIC - FORBIDDEN SERIES                     #
+#                         ProMenus 1.17                                #
+#                                                                      #
+# -------------------------------------------------------------------- #
+#
+# STATUS ATUAL:
+#   %pinger_isonline_172.18.0.1:25871%
+#
+# Retornos confirmados da expansão Pinger:
+#   &aOnline  -> ONLINE
+#   &cOffline -> OFFLINE
+#
+# O estado &eReiniciando está preparado de forma segura, porém a
+# expansão Pinger não produz esse terceiro retorno por conta própria.
+# Até existir uma fonte real de reinício, ele permanecerá inativo.
+#
+# O Pinger define o estado visual e o feedback secundário. A autoridade
+# de transferência permanece no Velocity; o [bungee] é enviado antes do
+# assert para preservar o fluxo nativo do ProMenus 1.17.
+#
+# -------------------------------------------------------------------- #
+
+enabled: true
+
+name: '{#240007}&l✦ {#8C0025}&lFORBIDDEN SERVERS {#240007}&l✦'
+
+size: 54
+editable: true
+clone_items: true
+
+aliases: ["forbidden", "forbiddenservers", "serversforbidden"]
+commands: ["forbidden", "forbiddenservers", "serversforbidden"]
+
+open_actions:
+  - '[sound] BLOCK_CHEST_OPEN'
+
+settings:
+  click_limit: 3
+  click_limit_message: '{#FF3158}&lFORBIDDEN {#696969}» {#BDBDBD}Não clique tão rápido.'
+  click_limit_duration: 1000
+  delay_between_clicks: 250
+  open_delay: 100
+
+items:
+
+  # ==================================================================
+  # MOLDURA EXTERNA
+  # Somente a borda do inventário; não existe ornamento ao redor
+  # do botão do servidor.
+  # ==================================================================
+
+  'FRAME-CORNERS':
+    slots: [0,8,45,53]
+    animated: false
+    material: RED_STAINED_GLASS_PANE
+    data: 0
+    amount: 1
+    name: '&r'
+    lore: []
+    actions: []
+
+  'FRAME-TOP':
+    slots: [1,2,3,5,6,7]
+    animated: false
+    material: BLACK_STAINED_GLASS_PANE
+    data: 0
+    amount: 1
+    name: '&r'
+    lore: []
+    actions: []
+
+  'FRAME-SIDES':
+    slots: [9,17,18,26,27,35,36,44]
+    animated: false
+    material: BLACK_STAINED_GLASS_PANE
+    data: 0
+    amount: 1
+    name: '&r'
+    lore: []
+    actions: []
+
+  'FRAME-BOTTOM':
+    slots: [46,47,48,50,51,52]
+    animated: false
+    material: BLACK_STAINED_GLASS_PANE
+    data: 0
+    amount: 1
+    name: '&r'
+    lore: []
+    actions: []
+
+  'FRAME-BOTTOM-ACCENT':
+    slot: 49
+    animated: false
+    material: RED_STAINED_GLASS_PANE
+    data: 0
+    amount: 1
+    name: '&r'
+    lore: []
+    actions: []
+
+
+  # ==================================================================
+  # TÍTULO
+  # slot 4 = quinto espaço visual da primeira linha
+  # ==================================================================
+
+  'TITLE':
+    slot: 4
+    animated: false
+    material: NETHER_STAR
+    data: 0
+    amount: 1
+    glow: true
+
+    name: '{#5A0016}&l✦ {#FF3158}&lSELECIONE SEU SERVIDOR {#5A0016}&l✦'
+
+    lore:
+      - ''
+      - '{#C7C7C7}Escolha abaixo o seu próximo destino.'
+      - '{#747474}Status e população são atualizados automaticamente.'
+      - ''
+
+    actions: []
+
+
+  # ==================================================================
+  # FORBIDDEN SERIES #1
+  # Botão isolado no centro, sem panes ou ornamentos ao redor.
+  # ==================================================================
+
+  'FORBIDDEN-1':
+    slot: 22
+
+    active: '%pinger_isonline_172.18.0.1:25871%'
+
+    animated: false
+
+    # ---------------------------------------------------------------
+    # FALLBACK DE SEGURANÇA
+    # Usado apenas se o placeholder retornar algo inesperado ou não
+    # for processado. Não permite conexão.
+    # ---------------------------------------------------------------
+
+    material: BARRIER
+    data: 0
+    amount: 1
+    glow: false
+
+    name: '{#FF3158}&l● {#FFFFFF}&lFORBIDDEN SERIES #1'
+
+    lore:
+      - ''
+      - '{#4A4A4A}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+      - ''
+      - '{#FF3158}&l⚠ STATUS INDISPONÍVEL'
+      - ''
+      - '{#A5A5A5}Não foi possível confirmar o estado'
+      - '{#A5A5A5}do servidor neste momento.'
+      - ''
+      - '{#777777}A conexão foi bloqueada por segurança.'
+      - ''
+      - '{#4A4A4A}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+      - ''
+
+    # ---------------------------------------------------------------
+    # COMPATIBILIDADE DE TRANSFERÊNCIA
+    # O [bungee] vem primeiro para preservar o fluxo nativo conhecido do
+    # ProMenus/Velocity. O Pinger continua servindo ao estado visual e ao
+    # feedback secundário; ele não é autoridade de roteamento.
+    # ---------------------------------------------------------------
+
+    actions:
+      - '[bungee=forbidden-1]'
+      - '[stop=[sound=BLOCK_ANVIL_LAND][abort]][assert-string-equals] %pinger_isonline_172.18.0.1:25871%|&aOnline'
+      - '[sound] ENTITY_ENDERMAN_TELEPORT'
+
+    states:
+
+      # -------------------------------------------------------------
+      # ONLINE
+      # -------------------------------------------------------------
+
+      '&aOnline':
+        animated: false
+        material: LIME_DYE
+        data: 0
+        amount: 1
+        glow: true
+
+        name: '{#430010}&l[{#FF3158}&lFORBIDDEN{#430010}&l] {#FFFFFF}&lSERIES #1'
+
+        lore:
+          - ''
+          - '{#5A0017}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''
+          - '{#FF3158}&l⚔ SERVIDOR PRINCIPAL'
+          - ''
+          - '{#C5C5C5}Uma experiência modded clássica,'
+          - '{#C5C5C5}profunda e construída para durar.'
+          - ''
+          - '{#777777}Versão: {#FFFFFF}1.7.10'
+          - '{#777777}Modalidade: {#FF8AA3}Modded Survival'
+          - '{#777777}Jogadores online: {#4DFF88}&l%pinger_players_172.18.0.1:25871%'
+          - ''
+          - '{#4DFF88}● {#C8C8C8}Status: {#4DFF88}&lONLINE'
+          - ''
+          - '{#FFE16A}&l➜ CLIQUE PARA CONECTAR'
+          - '{#8E8E8E}Sua jornada começa aqui.'
+          - ''
+          - '{#5A0017}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''
+
+      # -------------------------------------------------------------
+      # OFFLINE
+      # Não exibe população, evitando mostrar 0 como leitura válida.
+      # -------------------------------------------------------------
+
+      '&cOffline':
+        animated: false
+        material: GRAY_DYE
+        data: 0
+        amount: 1
+        glow: false
+
+        name: '{#555555}&l[{#8B8B8B}&lFORBIDDEN{#555555}&l] {#BDBDBD}&lSERIES #1'
+
+        lore:
+          - ''
+          - '{#3F3F3F}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''
+          - '{#8B8B8B}&l⚔ SERVIDOR PRINCIPAL'
+          - ''
+          - '{#A0A0A0}Uma experiência modded clássica,'
+          - '{#A0A0A0}profunda e construída para durar.'
+          - ''
+          - '{#777777}Versão: {#E7E7E7}1.7.10'
+          - '{#777777}Modalidade: {#D0D0D0}Modded Survival'
+          - ''
+          - '{#777777}● {#AFAFAF}Status: {#777777}&lOFFLINE'
+          - ''
+          - '{#888888}O servidor está indisponível para'
+          - '{#888888}conexões neste momento.'
+          - ''
+          - '{#686868}Tente novamente em alguns instantes.'
+          - ''
+          - '{#3F3F3F}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''
+
+      # -------------------------------------------------------------
+      # REINICIANDO
+      #
+      # Estruturalmente pronto e sem placeholders dependentes do
+      # backend. Só será exibido quando a fonte de "active" retornar
+      # exatamente &eReiniciando.
+      # -------------------------------------------------------------
+
+      '&eReiniciando':
+        animated: false
+        material: YELLOW_DYE
+        data: 0
+        amount: 1
+        glow: true
+
+        name: '{#7A5A00}&l[{#FFD43B}&lFORBIDDEN{#7A5A00}&l] {#FFFFFF}&lSERIES #1'
+
+        lore:
+          - ''
+          - '{#5A4810}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''
+          - '{#FFD43B}&l⟳ SERVIDOR REINICIANDO'
+          - ''
+          - '{#D0D0D0}O Forbidden está sendo preparado'
+          - '{#D0D0D0}para receber novas conexões.'
+          - ''
+          - '{#FFD43B}● {#D0D0D0}Status: {#FFD43B}&lREINICIANDO'
+          - ''
+          - '{#9A9A9A}Aguarde alguns instantes antes'
+          - '{#9A9A9A}de tentar entrar novamente.'
+          - ''
+          - '{#5A4810}&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+          - ''

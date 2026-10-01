@@ -1,0 +1,306 @@
+--- /mnt/data/hf2work/pristine/paper-plugin/src/main/java/br/com/atmbrasil/lobby/paper/ProMenusBungeeCompatibility.java	1980-02-01 00:00:00.000000000 +0000
++++ /mnt/data/hf2work/src/paper-plugin/src/main/java/br/com/atmbrasil/lobby/paper/ProMenusBungeeCompatibility.java	2026-09-15 01:09:57.057016428 +0000
+@@ -1,30 +1,62 @@
+ package br.com.atmbrasil.lobby.paper;
+ 
++import java.io.ByteArrayOutputStream;
++import java.io.DataOutputStream;
++import java.io.IOException;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.security.MessageDigest;
++import java.security.NoSuchAlgorithmException;
++import java.util.ArrayList;
++import java.util.HexFormat;
++import java.util.List;
++import java.util.Locale;
+ import java.util.Objects;
+ import java.util.concurrent.atomic.AtomicBoolean;
+ import java.util.logging.Level;
++import org.bukkit.entity.Player;
++import org.bukkit.event.EventHandler;
++import org.bukkit.event.EventPriority;
++import org.bukkit.event.Listener;
++import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+ import org.bukkit.plugin.Plugin;
+ import org.bukkit.plugin.java.JavaPlugin;
+ 
+ /**
+- * Reasserts the outgoing BungeeCord channel owned by ProMenus after all lobby plugins enable.
++ * Reasserts and traces the ProMenus BungeeCord transport without taking routing ownership.
+  *
+- * <p>This does not route players and does not register ProtocolObelisk as the channel owner.
+- * It only heals the Bukkit-side outgoing-channel registration that ProMenus' [bungee] task
+- * requires before Velocity can receive its native Connect payload.</p>
++ * <p>HF2 is deliberately observational. The only synthetic packet is a harmless BungeeCord
++ * {@code GetServer} query, sent through the ProMenus plugin identity when an administrator/player
++ * opens a reviewed server-selection menu. Velocity remains the routing authority.</p>
+  */
+ final class ProMenusBungeeCompatibility {
+     static final String PROMENUS_PLUGIN_NAME = "ProMenus";
+     static final String LEGACY_BUNGEE_CHANNEL = "BungeeCord";
+     private static final AtomicBoolean LOGGED_ARMED = new AtomicBoolean();
+     private static final AtomicBoolean LOGGED_MISSING = new AtomicBoolean();
++    private static final AtomicBoolean LISTENER_REGISTERED = new AtomicBoolean();
++    private static final List<String> REVIEWED_COMMANDS = List.of(
++            "/forbidden", "/forbiddenservers", "/serversforbidden",
++            "/atm", "/atmbrasil", "/atmservers", "/serversatm");
++    private static final List<String> REVIEWED_MENUS = List.of(
++            "LOBBY_FORBIDDEN.yml", "LOBBY_ATM_BRASIL.yml");
+ 
+     private ProMenusBungeeCompatibility() {
+     }
+ 
+     static void arm(JavaPlugin owner) {
+         Objects.requireNonNull(owner, "owner");
+-        owner.getServer().getScheduler().runTask(owner, () -> ensureRegistered(owner));
++        owner.getServer().getScheduler().runTask(owner, () -> {
++            ensureRegistered(owner);
++            auditMenus(owner);
++            if (LISTENER_REGISTERED.compareAndSet(false, true)) {
++                owner.getServer().getPluginManager().registerEvents(new TraceListener(owner), owner);
++                owner.getLogger().info(
++                        "[PROMENUS-TRACE] HF2 observer armed: commands=" + REVIEWED_COMMANDS
++                                + ", syntheticProbe=GetServer, routingMutation=false");
++            }
++        });
+     }
+ 
+     static boolean ensureRegistered(JavaPlugin owner) {
+@@ -55,4 +87,125 @@
+             return false;
+         }
+     }
++
++    private static void sendControlProbe(JavaPlugin owner, Player player, String command) {
++        Plugin proMenus = owner.getServer().getPluginManager().getPlugin(PROMENUS_PLUGIN_NAME);
++        if (proMenus == null || !proMenus.isEnabled()) {
++            owner.getLogger().warning(
++                    "[PROMENUS-TRACE] controlProbe=SKIPPED reason=promenus-unavailable player="
++                            + player.getName() + " command=" + command);
++            return;
++        }
++        ensureRegistered(owner);
++        try {
++            ByteArrayOutputStream bytes = new ByteArrayOutputStream(16);
++            try (DataOutputStream output = new DataOutputStream(bytes)) {
++                output.writeUTF("GetServer");
++            }
++            byte[] payload = bytes.toByteArray();
++            player.sendPluginMessage(proMenus, LEGACY_BUNGEE_CHANNEL, payload);
++            owner.getLogger().info(
++                    "[PROMENUS-TRACE] controlProbe=SENT player=" + player.getName()
++                            + " plugin=ProMenus channel=BungeeCord subchannel=GetServer bytes="
++                            + payload.length + " command=" + command
++                            + " routingMutation=false");
++        } catch (IOException | RuntimeException exception) {
++            owner.getLogger().log(
++                    Level.WARNING,
++                    "[PROMENUS-TRACE] controlProbe=FAILED player=" + player.getName()
++                            + " command=" + command,
++                    exception);
++        }
++    }
++
++    private static void auditMenus(JavaPlugin owner) {
++        for (String menu : REVIEWED_MENUS) {
++            Path path = resolveMenu(menu);
++            if (path == null) {
++                owner.getLogger().warning(
++                        "[PROMENUS-TRACE] menuAudit=MISSING menu=" + menu
++                                + " candidates=[../menus/LOBBIES,menus/LOBBIES]");
++                continue;
++            }
++            try {
++                byte[] raw = Files.readAllBytes(path);
++                List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
++                List<String> actions = extractRelevantActions(lines);
++                owner.getLogger().info(
++                        "[PROMENUS-TRACE] menuAudit=FOUND menu=" + menu
++                                + " path=" + path.toAbsolutePath().normalize()
++                                + " bytes=" + raw.length
++                                + " sha256=" + sha256(raw)
++                                + " relevantActions=" + actions);
++            } catch (IOException | RuntimeException exception) {
++                owner.getLogger().log(
++                        Level.WARNING,
++                        "[PROMENUS-TRACE] menuAudit=FAILED menu=" + menu
++                                + " path=" + path,
++                        exception);
++            }
++        }
++    }
++
++    private static Path resolveMenu(String fileName) {
++        for (Path candidate : List.of(
++                Path.of("..", "menus", "LOBBIES", fileName),
++                Path.of("menus", "LOBBIES", fileName))) {
++            Path normalized = candidate.toAbsolutePath().normalize();
++            if (Files.isRegularFile(normalized)) {
++                return normalized;
++            }
++        }
++        return null;
++    }
++
++    private static List<String> extractRelevantActions(List<String> lines) {
++        List<String> actions = new ArrayList<>();
++        for (int index = 0; index < lines.size(); index++) {
++            String trimmed = lines.get(index).trim();
++            String lower = trimmed.toLowerCase(Locale.ROOT);
++            if (lower.contains("[bungee=")
++                    || lower.contains("assert-string-equals")
++                    || lower.contains("[player-command]")
++                    || lower.contains("[console-command]")) {
++                actions.add((index + 1) + ":" + trimmed);
++            }
++        }
++        return List.copyOf(actions);
++    }
++
++    private static String sha256(byte[] data) {
++        try {
++            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(data));
++        } catch (NoSuchAlgorithmException exception) {
++            throw new IllegalStateException("SHA-256 unavailable", exception);
++        }
++    }
++
++    private static final class TraceListener implements Listener {
++        private final JavaPlugin owner;
++
++        private TraceListener(JavaPlugin owner) {
++            this.owner = owner;
++        }
++
++        @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
++        public void onCommand(PlayerCommandPreprocessEvent event) {
++            String command = firstToken(event.getMessage()).toLowerCase(Locale.ROOT);
++            if (!REVIEWED_COMMANDS.contains(command)) {
++                return;
++            }
++            owner.getLogger().info(
++                    "[PROMENUS-TRACE] menuCommand player=" + event.getPlayer().getName()
++                            + " command=" + command + " phase=preprocess");
++            auditMenus(owner);
++            sendControlProbe(owner, event.getPlayer(), command);
++        }
++
++        private static String firstToken(String message) {
++            String trimmed = Objects.requireNonNullElse(message, "").trim();
++            int separator = trimmed.indexOf(' ');
++            return separator >= 0 ? trimmed.substring(0, separator) : trimmed;
++        }
++    }
+ }
+--- /mnt/data/hf2work/pristine/velocity-plugin/src/main/java/br/com/atmbrasil/lobby/velocity/Atm10LobbyVelocityPlugin.java	1980-02-01 00:00:00.000000000 +0000
++++ /mnt/data/hf2work/src/velocity-plugin/src/main/java/br/com/atmbrasil/lobby/velocity/Atm10LobbyVelocityPlugin.java	2026-09-15 01:10:12.976403825 +0000
+@@ -35,6 +35,9 @@
+ import com.velocitypowered.api.proxy.ServerConnection;
+ import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
+ import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
++import java.io.ByteArrayInputStream;
++import java.io.DataInputStream;
++import java.io.EOFException;
+ import java.io.IOException;
+ import java.nio.charset.StandardCharsets;
+ import java.nio.file.Path;
+@@ -1161,8 +1164,11 @@
+         // These identifiers belong process-wide to the official Simple Voice Chat plugins.
+         // Returning without marking the event handled preserves their listener/forwarding path,
+         // even if a rejected client or a stale configuration tried to reserve the same id.
+-        if (ReviewedSimpleVoiceChatExtension.externallyOwns(channelId)
+-                || ProxyPluginMessageOwnership.externallyOwns(channelId)) {
++        if (ReviewedSimpleVoiceChatExtension.externallyOwns(channelId)) {
++            return;
++        }
++        if (ProxyPluginMessageOwnership.externallyOwns(channelId)) {
++            traceNativeBungeePluginMessage(event, channelId, player);
+             return;
+         }
+ 
+@@ -1529,6 +1535,24 @@
+ 
+     @Subscribe(priority = Short.MIN_VALUE, async = false)
+     public void onServerPreConnect(ServerPreConnectEvent event) {
++        String previous = Optional.ofNullable(event.getPreviousServer())
++                .map(server -> server.getServerInfo().getName())
++                .orElseGet(() -> event.getPlayer().getCurrentServer()
++                        .map(connection -> connection.getServerInfo().getName())
++                        .orElse("none"));
++        String originalTarget = event.getOriginalServer().getServerInfo().getName();
++        String effectiveTarget = event.getResult().getServer()
++                .map(server -> server.getServerInfo().getName())
++                .orElse("DENIED");
++        consoleLogger.info(
++                "[BUNGEE-TRACE] preConnect player={} protocol={} previous={} originalTarget={} "
++                        + "effectiveTarget={} observerPriority={} routingMutation=false",
++                event.getPlayer().getUsername(),
++                event.getPlayer().getProtocolVersion().getProtocol(),
++                previous,
++                originalTarget,
++                effectiveTarget,
++                Short.MIN_VALUE);
+         NecroTempusTransportService transport = necroTempusTransport;
+         if (transport != null) {
+             transport.handleServerPreConnect(event);
+@@ -4789,6 +4813,49 @@
+                 : message;
+     }
+ 
++    private void traceNativeBungeePluginMessage(
++            PluginMessageEvent event, String channelId, Player player) {
++        byte[] data = event.getData();
++        String subchannel = "<decode-failed>";
++        String detail = "none";
++        try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(data))) {
++            subchannel = input.readUTF();
++            if (subchannel.equalsIgnoreCase("Connect")
++                    || subchannel.equalsIgnoreCase("ConnectOther")
++                    || subchannel.equalsIgnoreCase("Forward")
++                    || subchannel.equalsIgnoreCase("ForwardToPlayer")) {
++                try {
++                    detail = input.readUTF();
++                } catch (EOFException ignored) {
++                    detail = "<missing-argument>";
++                }
++            }
++        } catch (IOException | RuntimeException exception) {
++            detail = exception.getClass().getSimpleName();
++        }
++        consoleLogger.info(
++                "[BUNGEE-TRACE] pluginMessage channel={} subchannel={} detail={} bytes={} "
++                        + "source={} target={} player={} protocol={} nativeHandling=untouched",
++                channelId,
++                subchannel,
++                detail,
++                data.length,
++                pluginMessageEndpoint(event.getSource()),
++                pluginMessageEndpoint(event.getTarget()),
++                player == null ? "none" : player.getUsername(),
++                player == null ? -1 : player.getProtocolVersion().getProtocol());
++    }
++
++    private static String pluginMessageEndpoint(Object endpoint) {
++        if (endpoint instanceof ServerConnection serverConnection) {
++            return "server:" + serverName(serverConnection);
++        }
++        if (endpoint instanceof Player player) {
++            return "player:" + player.getUsername();
++        }
++        return endpoint == null ? "null" : endpoint.getClass().getSimpleName();
++    }
++
+     private static Player playerFrom(PluginMessageEvent event) {
+         if (event.getSource() instanceof Player player) {
+             return player;
+
+--- /dev/null
++++ tools/offline-paper-api-stubs/org/bukkit/event/player/PlayerCommandPreprocessEvent.java
++package org.bukkit.event.player;
++import org.bukkit.entity.Player;
++public class PlayerCommandPreprocessEvent {
++    public Player getPlayer() { return null; }
++    public String getMessage() { return ""; }
++}

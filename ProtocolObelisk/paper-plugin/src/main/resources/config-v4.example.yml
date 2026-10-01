@@ -1,0 +1,27 @@
+config-version: 4
+debug: false
+
+# Lobby Paper/Purpur dedicado. Rotas, /server, try e fallback pertencem ao velocity.toml.
+lobby-world: world
+
+network-compatibility:
+  suppress-recipe-book-packets: true
+  suppress-recipe-definition-packets: true
+
+necrotempus-tab:
+  enabled: true
+  refresh-ticks: 2
+  maximum-text-bytes: 16384
+  maximum-lines: 64
+  maximum-compressed-nbt-bytes: 30000
+  send-remove-on-disable: true
+
+safety:
+  protect-entire-server: true
+  # Opt-in: true tambem bloqueia menus/inventarios e interacoes genericas do visitante.
+  cancel-generic-ui-events: false
+  teleport-to-world-spawn-on-join: true
+  # false evita apagar o item de seletor entregue por outro plugin no login.
+  clear-inventory-on-join: false
+  clear-active-effects-on-join: true
+  void-rescue-y: -16.0

@@ -1,0 +1,39 @@
+STATUS=PASS
+JUNIT_VELOCITY=512/512
+JUNIT_PAPER=40/40
+JAVA_DISTINCT_TESTS=552
+PYTHON_PACKAGER_TESTS=6/6
+JAVA_NEW_TESTS=28
+SKIPPED=0
+FAILURES=0
+ABORTED=0
+REAL_CLIENT_REPLAY=NOT_EXECUTED
+LIVE_VELOCITY_PAPER_LINKAGE=NOT_EXECUTED
+LIVE_PROMENUS_CLICK=NOT_EXECUTED
+
+New and expanded coverage:
+- NormalizedRecipeLifecycleWiringTest: 7 new tests call the actual private
+  session completion method. Reviewed optional session identities and canonical
+  fallback release once with exact resources. Unknown evidence stays admitted
+  with recipes withheld. Missing/mismatched/conflicting receipts, config delivery,
+  Apothic/bootstrap guards remain effective. Raw identity stays unchanged.
+- ModernLobbyRegisterWiringTest: 5 new tests call actual settings construction,
+  preserve singleton Bungee REGISTER/UNREGISTER, reserve before optional channels,
+  retain cap96 and remove unrelated channels; inactive paths stay inactive.
+- PaperRecipeLifecyclePolicyTest: 2 new diagnostic tests identify missing proof
+  and leave successful evaluations without unsatisfied requirements.
+- ProxyPluginMessageOwnershipTest: 5 new tests fence proxy ownership in planner,
+  old/manual pins, stale session consumption and configuration loading. Admission
+  and original query identity remain independent of ownership filtering.
+- PaperMovementDiagnosticsTest: 9 new tests, 16 total. Single shared task,
+  max64 reads/pass, max16 poll records, max8 teleport records, 300-second initial
+  window, 15-second post-teleport window, restoration after130s without claiming
+  authentication, expiry/rearm/cancellation, quit/reconnect cleanup, stable control
+  comparison, failure isolation and debug-off behavior.
+- Existing structural-consumer test now checks recipe completion wiring.
+- Existing 6 packager tests include source/release byte identity for the three
+  allowlisted ProMenus integration files.
+
+The first full attempt exposed a disabled temporary bridge in the new recipe
+harness (7 failures). Its setup was fixed without weakening assertions or changing
+production. Both subsequent complete builds passed all552 Java tests.

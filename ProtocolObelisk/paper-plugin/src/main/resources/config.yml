@@ -1,0 +1,42 @@
+config-version: 4
+debug: false
+
+# Backend Paper/Purpur dedicado, com mundo void e estrutura somente vanilla.
+lobby-world: world
+
+network-compatibility:
+  # Necessario porque o cliente NeoForge e o Paper enumeram RecipeBookType de forma diferente.
+  # O lobby void nao usa o estado do livro de receitas; o filtro atua antes do encoder do Paper.
+  # true deve produzir earlyRecipeGuardInstalled=true no log de inicializacao.
+  suppress-recipe-book-packets: true
+
+  # Retem ClientboundUpdateRecipesPacket ate o Velocity confirmar todos os bootstraps PLAY.
+  # Depois libera uma instancia vazia valida, sem expor receitas Paper a mods.
+  # O backend modded enviara suas proprias receitas depois da troca nativa do Velocity.
+  suppress-recipe-definition-packets: true
+
+# Transporte opcional do estado final do TAB para clientes NecroTempus/Forge 1.7.10.
+# O Velocity confirma a identidade e a epoca da sessao antes de qualquer snapshot ser enviado.
+# Se TAB estiver ausente ou incompativel, somente este subsistema sera desativado.
+necrotempus-tab:
+  enabled: true
+  refresh-ticks: 2
+  maximum-text-bytes: 16384
+  maximum-lines: 64
+  maximum-compressed-nbt-bytes: 30000
+  send-remove-on-disable: true
+
+safety:
+  # OPs (ou jogadores com protocolobelisk.build) ignoram as restricoes de visitante.
+  protect-entire-server: true
+
+  # Compatibilidade opt-in. Quando true, cancela interacoes genericas com blocos,
+  # inventarios, entidades e armor stands para visitantes. Mantenha false com ProMenus,
+  # NPCs ou qualquer seletor de servidores baseado em item/inventario.
+  cancel-generic-ui-events: false
+
+  teleport-to-world-spawn-on-join: true
+  # Preserva itens de seletores de servidor instalados por outros plugins.
+  clear-inventory-on-join: false
+  clear-active-effects-on-join: true
+  void-rescue-y: -16.0

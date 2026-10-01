@@ -1,0 +1,34 @@
+{
+  "paper": {
+    "changed": [
+      "br/com/atmbrasil/lobby/paper/ProMenusBungeeCompatibility.class"
+    ],
+    "added": [
+      "META-INF/AKASHIC-PROMENUS-HF2.txt",
+      "br/com/atmbrasil/lobby/paper/ProMenusBungeeCompatibility$TraceListener.class"
+    ],
+    "removed": [],
+    "entries": 60
+  },
+  "velocity": {
+    "changed": [
+      "br/com/atmbrasil/lobby/velocity/Atm10LobbyVelocityPlugin.class"
+    ],
+    "added": [
+      "META-INF/AKASHIC-PROMENUS-HF2.txt"
+    ],
+    "removed": [],
+    "entries": 1007
+  },
+  "classMajor": {
+    "br/com/atmbrasil/lobby/paper/ProMenusBungeeCompatibility.class": 65,
+    "br/com/atmbrasil/lobby/paper/ProMenusBungeeCompatibility$TraceListener.class": 65,
+    "br/com/atmbrasil/lobby/velocity/Atm10LobbyVelocityPlugin.class": 65
+  },
+  "sha256": {
+    "ProtocolObelisk-Paper-1.9.16-EVOLUTION-PROMENUS-HF2-DIAG.jar": "c79e8c2a79e78c5144937e007202bb06f67497666c7910bfa14fd46425cef21a",
+    "ProtocolObelisk-Velocity-1.9.16-EVOLUTION-PROMENUS-HF2-DIAG.jar": "3565b6276e8f0633c6949165154d7ca736176386284ea43473b6b2ee6a67bba9",
+    "ProtocolObelisk-Paper-1.9.16-PROMENUS-HF2-overlay.zip": "1e37ecc5e5b8ec237b0dec5ee046d835b7ffb899790521f093e7c680e210b14c",
+    "ProtocolObelisk-Velocity-1.9.16-PROMENUS-HF2-overlay.zip": "1d1c924e379db53448071c92650c80b6cc0c667338022554ee077a5f23a10194"
+  }
+}

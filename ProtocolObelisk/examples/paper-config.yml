@@ -1,0 +1,31 @@
+config-version: 4
+debug: false
+lobby-world: world
+
+# Nenhum destino, IP, porta, menu ou comando de transferencia e configurado aqui.
+# O Velocity controla /server, try, fallback e plugins de roteamento.
+network-compatibility:
+  # Deve produzir earlyRecipeGuardInstalled=true no log do lobby.
+  suppress-recipe-book-packets: true
+  # Libera uma lista vazia valida somente apos os bootstraps PLAY do Velocity.
+  suppress-recipe-definition-packets: true
+
+# Bridge TAB opcional para clientes NecroTempus; usa a capability privada do Velocity.
+necrotempus-tab:
+  enabled: true
+  refresh-ticks: 2
+  maximum-text-bytes: 16384
+  maximum-lines: 64
+  maximum-compressed-nbt-bytes: 30000
+  send-remove-on-disable: true
+
+safety:
+  # OPs (ou jogadores com protocolobelisk.build) ignoram estas restricoes.
+  protect-entire-server: true
+  # Opt-in: mantenha false para permitir menus, NPCs e itens de selecao de servidor.
+  cancel-generic-ui-events: false
+  teleport-to-world-spawn-on-join: true
+  # Preserva o item de seletor entregue por outros plugins durante o login.
+  clear-inventory-on-join: false
+  clear-active-effects-on-join: true
+  void-rescue-y: -16.0

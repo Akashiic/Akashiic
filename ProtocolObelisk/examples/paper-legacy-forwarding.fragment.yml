@@ -1,0 +1,5 @@
+# config/paper-global.yml do lobby ao usar forwarding legacy.
+# Não ative modern forwarding simultaneamente.
+proxies:
+  velocity:
+    enabled: false

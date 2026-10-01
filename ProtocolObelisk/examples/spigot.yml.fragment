@@ -1,0 +1,3 @@
+# Paper/Purpur usando o mesmo forwarding legacy configurado no Velocity.
+settings:
+  bungeecord: true

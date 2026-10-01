@@ -1,0 +1,5 @@
+# Substitua somente estas chaves no velocity.toml depois de homologar
+# modern forwarding nos DOIS packs exatos.
+online-mode = true
+player-info-forwarding-mode = "modern"
+forwarding-secret-file = "forwarding.secret"
