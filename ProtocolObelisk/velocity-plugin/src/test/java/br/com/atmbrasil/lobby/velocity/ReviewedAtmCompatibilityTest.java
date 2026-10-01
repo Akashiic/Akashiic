@@ -394,6 +394,9 @@ final class ReviewedAtmCompatibilityTest {
                         new PinnedPlayChannel("simplemagnets:main", "1"),
                         new PinnedPlayChannel(
                                 "logisticsnetworks:set_default_node_visibility", "1"),
+                        // HF3: ATM10 8.2 lineage (LogisticsNetworks 1.16.3, network v9).
+                        new PinnedPlayChannel(
+                                "logisticsnetworks:sync_modifier_keys", "9"),
                         new PinnedPlayChannel(
                                 "structurize:notify_server_about_structure_packs",
                                 "1.0.832-1.21.1"),

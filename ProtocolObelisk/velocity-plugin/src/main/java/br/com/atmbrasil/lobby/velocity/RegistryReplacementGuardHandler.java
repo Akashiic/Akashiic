@@ -124,7 +124,7 @@ final class RegistryReplacementGuardHandler extends ChannelDuplexHandler {
 
         final byte[] transformedBody;
         try {
-            transformedBody = transformMode == TransformMode.EXACT_REPLACEMENT
+            transformedBody = transformMode != TransformMode.MERGE_DISTINCT_EXTENSION
                     ? replacementPacket.packetBody()
                     : MinecraftRegistryPacketCodec.mergeDistinctEntries(
                             originalBody,
@@ -246,6 +246,10 @@ final class RegistryReplacementGuardHandler extends ChannelDuplexHandler {
                             Atm10Normal82GiselleEnchantmentExtension.SHIM_ID)
                     && packet.registryId().equals(
                             Atm10Normal82GiselleEnchantmentExtension.REGISTRY_ID);
+            // A compatibility pack carries the complete registry its own server sends, validated
+            // at load time; it replaces Paper's packet exactly like the reviewed 8.1 resource.
+            case PACK_REPLACEMENT -> CompatibilityPack.isPackShimId(packet.shimId())
+                    && packet.registryId().equals(Atm10Normal81EnchantmentRegistry.REGISTRY_ID);
         };
         if (!valid) {
             throw new IllegalArgumentException(
@@ -357,7 +361,8 @@ final class RegistryReplacementGuardHandler extends ChannelDuplexHandler {
 
     enum TransformMode {
         EXACT_REPLACEMENT,
-        MERGE_DISTINCT_EXTENSION
+        MERGE_DISTINCT_EXTENSION,
+        PACK_REPLACEMENT
     }
 
     private enum Status {

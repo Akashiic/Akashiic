@@ -63,6 +63,8 @@ final class ConfigurationPersistenceTest {
                         "neoforge-server.toml",
                         "create-server.toml",
                         "create_hypertube-server.toml",
+                        "sophisticatedbackpacks-server.toml",
+                        "elevatorid-server.toml",
                         "securitycraft-server.toml",
                         "productivefarming-server.toml",
                         "bhc-server.toml",
@@ -119,6 +121,8 @@ final class ConfigurationPersistenceTest {
                         new PinnedPlayChannel("simplemagnets:main", "1"),
                         new PinnedPlayChannel(
                                 "logisticsnetworks:set_default_node_visibility", "1"),
+                        new PinnedPlayChannel(
+                                "logisticsnetworks:sync_modifier_keys", "9"),
                         new PinnedPlayChannel(
                                 "structurize:notify_server_about_structure_packs",
                                 "1.0.832-1.21.1"),
@@ -197,7 +201,8 @@ final class ConfigurationPersistenceTest {
         assertTrue(Files.readString(
                 temporaryDirectory.resolve("bridge.properties"), StandardCharsets.UTF_8)
                 .contains("transient-server-configs=neoforge-server.toml,create-server.toml,"
-                        + "create_hypertube-server.toml,securitycraft-server.toml,"
+                        + "create_hypertube-server.toml,sophisticatedbackpacks-server.toml,"
+                        + "elevatorid-server.toml,securitycraft-server.toml,"
                         + "productivefarming-server.toml,bhc-server.toml,"
                         + "utilitarian-server.toml,ars_nouveau/rewind.toml,"
                         + "matc-server.toml"));
@@ -348,6 +353,8 @@ final class ConfigurationPersistenceTest {
                         "neoforge-server.toml",
                         "create-server.toml",
                         "create_hypertube-server.toml",
+                        "sophisticatedbackpacks-server.toml",
+                        "elevatorid-server.toml",
                         "securitycraft-server.toml",
                         "productivefarming-server.toml",
                         "bhc-server.toml",
@@ -393,7 +400,7 @@ final class ConfigurationPersistenceTest {
         assertEquals(3_145_728, loaded.maximumSilentGearTotalBytes());
         assertEquals(16, loaded.maximumSilentGearSnapshots());
         assertEquals(512, loaded.maximumDerivedServerConfigs());
-        assertEquals(39, loaded.pinnedPlaySinkChannels().size());
+        assertEquals(40, loaded.pinnedPlaySinkChannels().size());
         assertEquals(48, loaded.maximumAutomaticPlaySinkChannels());
         assertEquals(48, loaded.configuredMaximumAutomaticPlaySinkChannels());
         assertFalse(loaded.automaticPlaySinkBudgetClamped());
@@ -535,10 +542,10 @@ final class ConfigurationPersistenceTest {
 
         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
 
-        assertEquals(43, loaded.pinnedPlaySinkChannels().size());
+        assertEquals(44, loaded.pinnedPlaySinkChannels().size());
         assertEquals(48, loaded.configuredMaximumAutomaticPlaySinkChannels());
         assertEquals(48, loaded.maximumAutomaticPlaySinkChannels());
-        assertEquals(91, loaded.maximumGlobalPlaySinkChannels());
+        assertEquals(92, loaded.maximumGlobalPlaySinkChannels());
         assertEquals(4_096, loaded.maximumLobbyPlayPackets());
         assertEquals(8_388_608, loaded.maximumLobbyPlayTotalBytes());
         assertEquals(60_000, loaded.lobbyPlayBudgetRefillMillis());
@@ -847,6 +854,8 @@ final class ConfigurationPersistenceTest {
                         "neoforge-server.toml",
                         "create-server.toml",
                         "create_hypertube-server.toml",
+                        "sophisticatedbackpacks-server.toml",
+                        "elevatorid-server.toml",
                         "securitycraft-server.toml",
                         "productivefarming-server.toml",
                         "bhc-server.toml",
@@ -1036,7 +1045,7 @@ final class ConfigurationPersistenceTest {
                 "maximum-automatic-play-sink-channels", "60"));
         BridgeConfig clamped = BridgeConfig.load(temporaryDirectory);
         assertEquals(60, clamped.configuredMaximumAutomaticPlaySinkChannels());
-        assertEquals(57, clamped.maximumAutomaticPlaySinkChannels());
+        assertEquals(56, clamped.maximumAutomaticPlaySinkChannels());
         assertTrue(clamped.automaticPlaySinkBudgetClamped());
 
         resetDefaults();
@@ -1234,6 +1243,7 @@ final class ConfigurationPersistenceTest {
                         "translocators:network",
                         "simplemagnets:main",
                         "logisticsnetworks:set_default_node_visibility",
+                        "logisticsnetworks:sync_modifier_keys",
                         "structurize:notify_server_about_structure_packs",
                         "refinedstorage:set_tenth_anniversary_cape",
                         "accessories:main",
@@ -1263,7 +1273,7 @@ final class ConfigurationPersistenceTest {
 
         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
 
-        assertEquals(39, loaded.pinnedPlaySinkChannels().size());
+        assertEquals(40, loaded.pinnedPlaySinkChannels().size());
         assertEquals(1L, loaded.pinnedPlaySinkChannels().stream()
                 .filter(channel -> channel.id().equals("pneumaticcraft:sync_amadron_offers"))
                 .count());
@@ -1288,7 +1298,7 @@ final class ConfigurationPersistenceTest {
 
         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
 
-        assertEquals(39, loaded.pinnedPlaySinkChannels().size());
+        assertEquals(40, loaded.pinnedPlaySinkChannels().size());
         assertEquals(1L, loaded.pinnedPlaySinkChannels().stream()
                 .filter(channel -> channel.equals(
                         ReviewedAtmCompatibility.MAHOU_TSUKAI_CHUNK_REQUEST_PLAY_SINK))
@@ -1338,7 +1348,7 @@ final class ConfigurationPersistenceTest {
 
         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
 
-        assertEquals(39, loaded.pinnedPlaySinkChannels().size());
+        assertEquals(40, loaded.pinnedPlaySinkChannels().size());
         assertEquals(1L, loaded.pinnedPlaySinkChannels().stream()
                 .filter(channel -> channel.id().equals("kubejs:first_click"))
                 .count());
@@ -1353,7 +1363,7 @@ final class ConfigurationPersistenceTest {
 
         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
 
-        assertEquals(39, loaded.pinnedPlaySinkChannels().size());
+        assertEquals(40, loaded.pinnedPlaySinkChannels().size());
         assertEquals(1L, loaded.pinnedPlaySinkChannels().stream()
                 .filter(channel -> channel.id().equals("placebo:patreon_disable"))
                 .count());
@@ -1368,7 +1378,7 @@ final class ConfigurationPersistenceTest {
 
         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
 
-        assertEquals(39, loaded.pinnedPlaySinkChannels().size());
+        assertEquals(40, loaded.pinnedPlaySinkChannels().size());
         assertEquals(1L, loaded.pinnedPlaySinkChannels().stream()
                 .filter(channel -> channel.id().equals("mekanism:key"))
                 .count());
@@ -1383,7 +1393,7 @@ final class ConfigurationPersistenceTest {
 
         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
 
-        assertEquals(39, loaded.pinnedPlaySinkChannels().size());
+        assertEquals(40, loaded.pinnedPlaySinkChannels().size());
         assertEquals(1L, loaded.pinnedPlaySinkChannels().stream()
                 .filter(channel -> channel.id().equals("xycraft_core:modifier_key"))
                 .count());
@@ -1400,7 +1410,7 @@ final class ConfigurationPersistenceTest {
 
         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
 
-        assertEquals(39, loaded.pinnedPlaySinkChannels().size());
+        assertEquals(40, loaded.pinnedPlaySinkChannels().size());
         assertEquals(
                 3L,
                 loaded.pinnedPlaySinkChannels().stream()
@@ -1419,7 +1429,7 @@ final class ConfigurationPersistenceTest {
 
         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
 
-        assertEquals(19, loaded.transientServerConfigs().size());
+        assertEquals(21, loaded.transientServerConfigs().size());
         assertEquals(1L, loaded.transientServerConfigs().stream()
                 .filter(config -> config.equals("Mekanism/general.toml"))
                 .count());
@@ -1435,11 +1445,11 @@ final class ConfigurationPersistenceTest {
         BridgeConfig loaded = BridgeConfig.load(temporaryDirectory);
 
         assertFalse(loaded.enableBuiltInMekanismCompatibility());
-        assertEquals(9, loaded.transientServerConfigs().size());
+        assertEquals(11, loaded.transientServerConfigs().size());
         assertTrue(loaded.transientServerConfigs().contains("matc-server.toml"));
         assertTrue(loaded.transientServerConfigs().stream()
                 .noneMatch(config -> config.startsWith("Mekanism/")));
-        assertEquals(38, loaded.pinnedPlaySinkChannels().size());
+        assertEquals(39, loaded.pinnedPlaySinkChannels().size());
         assertTrue(loaded.pinnedPlaySinkChannels().stream()
                 .noneMatch(channel -> channel.id().equals("mekanism:key")));
     }

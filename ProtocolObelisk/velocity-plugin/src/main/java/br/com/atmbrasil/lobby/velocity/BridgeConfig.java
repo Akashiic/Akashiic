@@ -61,6 +61,12 @@ record BridgeConfig(
         int maximumLobbyPlayTotalBytes,
         int maximumLobbyPlayPackets,
         int lobbyPlayBudgetRefillMillis,
+        boolean enableCompatibilityPacks,
+        boolean compatibilityPackCapturedServerConfigs,
+        boolean compatibilityPackReplaceEnchantmentRegistry,
+        boolean compatibilityPackReleaseRecipes,
+        String forcedCompatibilityPack,
+        boolean compatibilityPackMismatchReports,
         boolean legacyRoutingConfigurationIgnored,
         ProtocolLimits limits) {
 
@@ -69,6 +75,10 @@ record BridgeConfig(
     private static final Pattern SERVER_NAME = Pattern.compile("[A-Za-z0-9_.-]{1,64}");
     private static final Pattern LEGACY_DESTINATION_KEY = Pattern.compile(
             "destination\\.[a-z0-9][a-z0-9_-]{0,47}\\.(display-name|velocity-server)");
+    private static final Pattern COMPATIBILITY_PACK_ID = Pattern.compile(
+            "[a-z0-9][a-z0-9._-]{0,63}");
+    static final String COMPATIBILITY_PACK_DIRECTORY = "packs";
+    static final String COMPATIBILITY_REPORT_DIRECTORY = "compatibility-reports";
     private static final Pattern REGISTRY_SHIM_ID = Pattern.compile(
             "[a-z0-9][a-z0-9._-]{0,63}");
     private static final Pattern RESOURCE_LOCATION = Pattern.compile(
@@ -187,6 +197,12 @@ record BridgeConfig(
             "maximum-lobby-play-total-bytes",
             "maximum-lobby-play-packets",
             "lobby-play-budget-refill-millis",
+            "enable-compatibility-packs",
+            "compatibility-pack-server-configs",
+            "compatibility-pack-replace-enchantment-registry",
+            "compatibility-pack-release-recipes",
+            "forced-compatibility-pack",
+            "compatibility-pack-mismatch-reports",
             "destinations",
             "maximum-query-bytes",
             "maximum-setup-bytes",
@@ -340,6 +356,28 @@ record BridgeConfig(
             maximum-lobby-play-packets=512
             lobby-play-budget-refill-millis=60000
 
+            # Compatibility packs (.obpack) captured from a modpack's official ServerFiles with
+            # tools/obelisk-capture. Drop them in plugins/protocolobelisk/packs/ and restart.
+            # A pack is selected only when NeoForge's own channel negotiation says its server
+            # would accept the connecting client; it then supplies every SERVER config, the
+            # modded dynamic registries and their tags, the modded entries of the registries
+            # Paper sends (appended after Paper's, so Paper's ids are unchanged), the enchantment
+            # registry and the vanilla BlockState translation. Packs never decide admission or
+            # routing.
+            enable-compatibility-packs=true
+            # captured = send the exact SERVER-config contents of the captured server;
+            # empty = send every name with an empty TOML so the client loads its own defaults.
+            compatibility-pack-server-configs=captured
+            # true = replace Paper's enchantment registry with the captured one (and its tags);
+            # false = only append the pack's non-vanilla enchantments to Paper's.
+            compatibility-pack-replace-enchantment-registry=true
+            compatibility-pack-release-recipes=true
+            # Optional pack id used only when no pack negotiates. Leave empty normally.
+            forced-compatibility-pack=
+            # Write plugins/protocolobelisk/compatibility-reports/<contract>.txt for clients that
+            # match no pack, listing exactly which channels/versions differ.
+            compatibility-pack-mismatch-reports=true
+
             maximum-query-bytes=1048576
             maximum-setup-bytes=1048576
             maximum-channels=16384
@@ -362,6 +400,7 @@ record BridgeConfig(
                 Objects.requireNonNull(transientServerConfigs, "transientServerConfigs"));
         pinnedPlaySinkChannels = List.copyOf(
                 Objects.requireNonNull(pinnedPlaySinkChannels, "pinnedPlaySinkChannels"));
+        Objects.requireNonNull(forcedCompatibilityPack, "forcedCompatibilityPack");
         Objects.requireNonNull(limits, "limits");
     }
 
@@ -603,6 +642,28 @@ record BridgeConfig(
                     "maximum-lobby-play-total-bytes cannot be below the per-payload limit");
         }
 
+        boolean enableCompatibilityPacks = strictBooleanOrDefault(
+                properties, "enable-compatibility-packs", true);
+        String compatibilityPackServerConfigs = properties.getProperty(
+                "compatibility-pack-server-configs", "captured").strip();
+        if (!compatibilityPackServerConfigs.equals("captured")
+                && !compatibilityPackServerConfigs.equals("empty")) {
+            throw new IllegalArgumentException(
+                    "compatibility-pack-server-configs must be captured or empty");
+        }
+        boolean compatibilityPackReplaceEnchantmentRegistry = strictBooleanOrDefault(
+                properties, "compatibility-pack-replace-enchantment-registry", true);
+        boolean compatibilityPackReleaseRecipes = strictBooleanOrDefault(
+                properties, "compatibility-pack-release-recipes", true);
+        String forcedCompatibilityPack = properties.getProperty(
+                "forced-compatibility-pack", "").strip();
+        if (!forcedCompatibilityPack.isEmpty()
+                && !COMPATIBILITY_PACK_ID.matcher(forcedCompatibilityPack).matches()) {
+            throw new IllegalArgumentException("forced-compatibility-pack is not a valid pack id");
+        }
+        boolean compatibilityPackMismatchReports = strictBooleanOrDefault(
+                properties, "compatibility-pack-mismatch-reports", true);
+
         int maxQuery = boundedInt(
                 properties, "maximum-query-bytes", 32_768, 1_048_576);
         int maxSetup = boundedInt(
@@ -663,6 +724,12 @@ record BridgeConfig(
                 maximumLobbyPlayTotalBytes,
                 maximumLobbyPlayPackets,
                 lobbyPlayBudgetRefillMillis,
+                enableCompatibilityPacks,
+                compatibilityPackServerConfigs.equals("captured"),
+                compatibilityPackReplaceEnchantmentRegistry,
+                compatibilityPackReleaseRecipes,
+                forcedCompatibilityPack,
+                compatibilityPackMismatchReports,
                 legacyRoutingConfigurationIgnored,
                 new ProtocolLimits(maxQuery, maxSetup, 2, maxChannels, maxPerProtocol,
                         maxResource, maxVersion));

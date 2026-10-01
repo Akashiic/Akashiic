@@ -207,6 +207,55 @@ final class BlockStateTranslationProfile {
                 manifest,
                 "client-full-contract-sha256",
                 expectedFullClientContractSha256);
+        return fromValidatedHeader(
+                manifest,
+                expectedProfileId,
+                expectedMinecraftProtocol,
+                mapFile -> readBounded(loader, resourceRoot + mapFile, MAXIMUM_MAP_BYTES),
+                true);
+    }
+
+    /**
+     * Loads the BlockState projection carried by a compatibility pack (manifest format 3).
+     *
+     * <p>Format 3 is the reviewed format 2 keyed to a pack id instead of an observed client
+     * contract: packs are selected by NeoForge channel negotiation. The pack loader has already
+     * verified every pack entry against the pack's SHA-256 manifest; this method still pins the
+     * POBS map by length and SHA-256 and revalidates every structural invariant.</p>
+     */
+    static BlockStateTranslationProfile loadPack(
+            String packId,
+            byte[] manifestBytes,
+            MapReader mapReader) throws IOException {
+        Objects.requireNonNull(packId, "packId");
+        Objects.requireNonNull(manifestBytes, "manifestBytes");
+        Objects.requireNonNull(mapReader, "mapReader");
+        if (manifestBytes.length > MAXIMUM_MANIFEST_BYTES) {
+            throw new IllegalArgumentException("pack BlockState manifest exceeds byte bound");
+        }
+        Properties manifest = new Properties();
+        manifest.load(new ByteArrayInputStream(manifestBytes));
+        requireEquals(manifest, "format-version", "3");
+        requireEquals(manifest, "profile-id", packId);
+        requireEquals(manifest, "minecraft-version", "1.21.1");
+        requireEquals(
+                manifest, "minecraft-protocol", Integer.toString(REVIEWED_MINECRAFT_PROTOCOL));
+        return fromValidatedHeader(
+                manifest, packId, REVIEWED_MINECRAFT_PROTOCOL, mapReader, false);
+    }
+
+    /** Reads one bounded map resource named by a validated manifest. */
+    @FunctionalInterface
+    interface MapReader {
+        byte[] read(String mapFile) throws IOException;
+    }
+
+    private static BlockStateTranslationProfile fromValidatedHeader(
+            Properties manifest,
+            String expectedProfileId,
+            int expectedMinecraftProtocol,
+            MapReader mapReader,
+            boolean contractKeyed) throws IOException {
         requireEquals(
                 manifest,
                 "vanilla-state-table.count",
@@ -242,8 +291,10 @@ final class BlockStateTranslationProfile {
                     "reviewed BlockState map length exceeds byte bound");
         }
         String mapSha256 = requireSha256(manifest, "map.sha256");
-        byte[] mapBytes = readBounded(
-                loader, resourceRoot + mapFile, MAXIMUM_MAP_BYTES);
+        byte[] mapBytes = mapReader.read(mapFile);
+        if (mapBytes == null || mapBytes.length > MAXIMUM_MAP_BYTES) {
+            throw new IllegalArgumentException("reviewed BlockState map is absent or too large");
+        }
         if (mapBytes.length != mapBytesLength) {
             throw new IllegalArgumentException("reviewed BlockState map length mismatch");
         }
@@ -298,7 +349,7 @@ final class BlockStateTranslationProfile {
                                 manifest, "structural.falling-block-entity-type-id"))
                         : absentOptionalInt(
                                 manifest, "structural.falling-block-entity-type-id");
-        requireExactReviewedManifestKeys(manifest, capabilities);
+        requireExactReviewedManifestKeys(manifest, capabilities, contractKeyed);
 
         return new BlockStateTranslationProfile(
                 expectedProfileId,
@@ -857,13 +908,13 @@ final class BlockStateTranslationProfile {
 
     private static void requireExactReviewedManifestKeys(
             Properties properties,
-            Set<RewriteCapability> capabilities) {
+            Set<RewriteCapability> capabilities,
+            boolean contractKeyed) {
         HashSet<String> expected = new HashSet<>(Set.of(
                 "format-version",
                 "profile-id",
                 "minecraft-version",
                 "minecraft-protocol",
-                "client-full-contract-sha256",
                 "vanilla-state-table.count",
                 "vanilla-state-table.sha256",
                 "client-global-state.count",
@@ -883,6 +934,9 @@ final class BlockStateTranslationProfile {
                 "packet.level-chunk-with-light",
                 "packet.level-event",
                 "packet.section-blocks-update"));
+        if (contractKeyed) {
+            expected.add("client-full-contract-sha256");
+        }
         if (capabilities.contains(RewriteCapability.FALLING_BLOCK_ENTITY)) {
             expected.add("packet.add-entity");
             expected.add("structural.falling-block-entity-type-id");

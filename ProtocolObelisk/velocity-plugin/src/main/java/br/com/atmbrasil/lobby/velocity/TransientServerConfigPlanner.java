@@ -152,6 +152,81 @@ final class TransientServerConfigPlanner {
                 catalog.totalEncodedBytes());
     }
 
+    /**
+     * Replaces the baseline with the complete SERVER-config transaction of a selected
+     * compatibility pack, exactly as the captured NeoForge server sends it.
+     *
+     * <p>{@code capturedContents=false} keeps the full name list but sends empty TOMLs, so every
+     * spec still loads (from the client's own defaults) without the pack's values. NeoForge
+     * indexes synced configs by exact filename; a name the client does not register is ignored.</p>
+     */
+    static Plan withCompatibilityPack(Plan base, CompatibilityPack pack, boolean capturedContents) {
+        Objects.requireNonNull(base, "base");
+        Objects.requireNonNull(pack, "pack");
+        if (base.reviewedCatalogApplied()) {
+            throw new IllegalArgumentException("a reviewed SERVER-config catalog is already applied");
+        }
+        List<String> names = pack.serverConfigNames();
+        LinkedHashSet<String> baseNames = new LinkedHashSet<>(base.configs());
+        int retained = 0;
+        for (String fileName : names) {
+            requireConfigFileName(fileName, "compatibility pack");
+            if (baseNames.contains(fileName)) {
+                retained++;
+            }
+        }
+        return new Plan(
+                names,
+                base.derivedConfigCount(),
+                base.omittedDerivedConfigCount(),
+                base.ignoredNamespaceCount(),
+                capturedContents ? pack.catalogId() : pack.catalogId() + EMPTY_CONTENTS_SUFFIX,
+                pack.serverConfigNameSequenceSha256(),
+                capturedContents
+                        ? pack.serverConfigPayloadSequenceSha256()
+                        : emptyPayloadSequenceSha256(names),
+                names.size(),
+                names.size() - retained,
+                retained,
+                base.configs().size() - retained,
+                capturedContents ? pack.serverConfigEncodedBytes() : emptyEncodedBytes(names));
+    }
+
+    static final String EMPTY_CONTENTS_SUFFIX = "-empty";
+
+    static boolean isCompatibilityPackCatalog(String catalogId) {
+        return catalogId != null && catalogId.startsWith(CompatibilityPack.CATALOG_ID_PREFIX);
+    }
+
+    /** Encodes the NeoForge ConfigFilePayload for a name with empty contents. */
+    static byte[] emptyConfigPayload(String fileName) {
+        byte[] name = fileName.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream(name.length + 4);
+        int remaining = name.length;
+        while ((remaining & ~0x7F) != 0) {
+            out.write((remaining & 0x7F) | 0x80);
+            remaining >>>= 7;
+        }
+        out.write(remaining);
+        out.writeBytes(name);
+        out.write(0);
+        return out.toByteArray();
+    }
+
+    private static String emptyPayloadSequenceSha256(List<String> names) {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            names.forEach(name -> digest.update(emptyConfigPayload(name)));
+            return java.util.HexFormat.of().formatHex(digest.digest());
+        } catch (java.security.NoSuchAlgorithmException impossible) {
+            throw new ExceptionInInitializerError(impossible);
+        }
+    }
+
+    private static int emptyEncodedBytes(List<String> names) {
+        return names.stream().mapToInt(name -> emptyConfigPayload(name).length).sum();
+    }
+
     private static Plan withoutCatalog(
             List<String> configs,
             int derivedConfigCount,
@@ -236,7 +311,19 @@ final class TransientServerConfigPlanner {
                 throw new IllegalArgumentException(
                         "a plan without a reviewed catalog cannot carry catalog evidence");
             }
-            if (catalogApplied
+            if (catalogApplied && isCompatibilityPackCatalog(reviewedCatalogId)) {
+                if (!reviewedCatalogNameSequenceSha256.equals(
+                                Atm10Normal81ServerConfigCatalog.nameSequenceSha256(configs))
+                        || !reviewedCatalogPayloadSequenceSha256.matches("[0-9a-f]{64}")
+                        || reviewedCatalogCandidateCount != configs.size()
+                        || configs.isEmpty()
+                        || reviewedCatalogEncodedBytes < 1
+                        || addedReviewedCatalogConfigCount + retainedReviewedCatalogConfigCount
+                                != reviewedCatalogCandidateCount) {
+                    throw new IllegalArgumentException(
+                            "compatibility-pack SERVER-config plan is internally inconsistent");
+                }
+            } else if (catalogApplied
                     && (!reviewedCatalogId.equals(
                                     Atm10Normal81ServerConfigCatalog.CATALOG_ID)
                             || !reviewedCatalogNameSequenceSha256.equals(

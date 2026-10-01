@@ -135,10 +135,13 @@ final class Atm10Normal81StructuralNormalizationWiringTest {
 
         String replacement = compact(methodBody(source,
                 "private boolean beginRegistryReplacementAttachment("));
+        // Since the 8.2-lineage transform (HF3) the negotiated protocol is read once into a local.
+        assertTrue(replacement.contains(
+                "int clientProtocol = player.getProtocolVersion().getProtocol();"));
         assertTrue(replacement.contains("RegistryShimCatalog.selectPaperRegistryReplacement( "
-                + "player.getProtocolVersion().getProtocol(), registryShimPackets, structuralClientContract(session))"));
+                + "clientProtocol, registryShimPackets, structuralClientContract(session))"));
         assertTrue(replacement.contains("Atm10Normal81Contract.matchesStructuralIdentity( "
-                + "player.getProtocolVersion().getProtocol(), structuralClientContract(session))"));
+                + "clientProtocol, structuralClientContract(session))"));
         assertFalse(replacement.contains("session.fullClientContractSha256"));
 
         String tail = compact(methodBody(source, "private void injectDynamicRegistryShims("));

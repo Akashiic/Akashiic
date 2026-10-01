@@ -440,6 +440,9 @@ final class PlaySinkPlannerTest {
                                 .ETERNAL_STARLIGHT_SIMPLE_ACTION_PLAY_SINK))
                         .filter(channel -> !channel.equals(ReviewedAtmCompatibility
                                 .RELICS_SHIELD_RELEASE_PLAY_SINK))
+                        // The fixture is an 8.1-era client without LogisticsNetworks v9.
+                        .filter(channel -> !channel.equals(ReviewedAtmCompatibility
+                                .LOGISTICS_NETWORKS_MODIFIER_KEYS_ATM10_82_PLAY_SINK))
                         .toList(),
                 plan.channels().stream()
                         .map(channel -> new PinnedPlayChannel(channel.id(), channel.version()))

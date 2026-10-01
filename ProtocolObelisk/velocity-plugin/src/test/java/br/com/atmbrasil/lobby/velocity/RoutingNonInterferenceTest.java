@@ -18,7 +18,10 @@ final class RoutingNonInterferenceTest {
     @Test
     void routingHooksAreUniqueSynchronousAndStrictlyObservational() throws IOException {
         var methods = Arrays.asList(Atm10LobbyVelocityPlugin.class.getDeclaredMethods());
+        // The HF2 BUNGEE-TRACE observer captures the event in a lambda; javac emits that as a
+        // synthetic method. Only real (subscribable) hooks count toward uniqueness.
         var preConnectHooks = methods.stream()
+                .filter(method -> !method.isSynthetic())
                 .filter(method -> Arrays.asList(method.getParameterTypes())
                         .contains(ServerPreConnectEvent.class))
                 .toList();

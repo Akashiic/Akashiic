@@ -27,6 +27,13 @@ dependencies {
     }
 }
 
+tasks.test {
+    // Optional end-to-end checks against packs captured with tools/obelisk-capture.
+    providers.gradleProperty("protocolObeliskRealPacks").orNull?.let {
+        systemProperty("protocolobelisk.realPacks", it)
+    }
+}
+
 tasks.processResources {
     val pluginVersion = project.version.toString()
     inputs.property("pluginVersion", pluginVersion)

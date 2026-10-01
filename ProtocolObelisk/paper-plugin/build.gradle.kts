@@ -17,6 +17,9 @@ dependencies {
     } else {
         compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
         compileOnly("io.netty:netty-transport:4.1.97.Final")
+        // Tests exercise the plugin's Bukkit-facing helpers, so the API is needed on their
+        // classpath as well (it is never packaged into the plugin JAR).
+        testImplementation("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
         testImplementation("io.netty:netty-transport:4.1.97.Final")
         testImplementation(platform("org.junit:junit-bom:5.13.4"))
         testImplementation("org.junit.jupiter:junit-jupiter")

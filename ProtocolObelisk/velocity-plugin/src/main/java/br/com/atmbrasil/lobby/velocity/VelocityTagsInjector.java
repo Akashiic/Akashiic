@@ -124,14 +124,34 @@ final class VelocityTagsInjector {
         return tagsPacketId;
     }
 
+    /**
+     * Writes one CONFIG Update Tags packet for registries a compatibility pack delivered. The
+     * client keeps the last tag payload per registry, so these entries supersede Paper's only for
+     * the registries whose numeric ids this pack itself defined.
+     */
+    CompletableFuture<Void> injectTagMap(Player player, Map<String, Map<String, int[]>> tags) {
+        Objects.requireNonNull(tags, "tags");
+        if (tags.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+        return injectVelocityTagMap(player, tags);
+    }
+
     CompletableFuture<Void> inject(Player player, EmbeddedRegistryTagsProfile profile) {
         Objects.requireNonNull(player, "player");
         Objects.requireNonNull(profile, "profile");
+        if (profile.isEmpty()) {
+            return CompletableFuture.failedFuture(
+                    new IllegalArgumentException("registry tags profile is empty"));
+        }
+        return injectVelocityTagMap(player, profile.velocityTagMap());
+    }
+
+    private CompletableFuture<Void> injectVelocityTagMap(
+            Player player, Map<String, Map<String, int[]>> tagMap) {
+        Objects.requireNonNull(player, "player");
         CompletableFuture<Void> result = new CompletableFuture<>();
         try {
-            if (profile.isEmpty()) {
-                throw new IllegalArgumentException("registry tags profile is empty");
-            }
             if (!connectedPlayerClass.isInstance(player)) {
                 throw new IllegalStateException(
                         "Velocity Player implementation is not ConnectedPlayer");
@@ -142,7 +162,7 @@ final class VelocityTagsInjector {
                 throw new IllegalStateException(
                         "tag injection attempted outside CONFIG state: " + currentState);
             }
-            Object packet = packetConstructor.newInstance(profile.velocityTagMap());
+            Object packet = packetConstructor.newInstance(tagMap);
             Object rawFuture = writeMethod.invoke(connection, packet);
             if (!(rawFuture instanceof ChannelFuture channelFuture)) {
                 throw new IllegalStateException("Velocity connection closed before tag write");

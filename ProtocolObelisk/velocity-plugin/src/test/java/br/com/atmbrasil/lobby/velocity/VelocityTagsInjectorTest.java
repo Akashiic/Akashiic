@@ -18,7 +18,9 @@ final class VelocityTagsInjectorTest {
         assertTrue(source.contains(
                 "com.velocitypowered.proxy.protocol.packet.config.TagsUpdatePacket"));
         assertTrue(source.contains("getPacketId"));
-        assertTrue(source.contains("packetConstructor.newInstance(profile.velocityTagMap())"));
+        // Embedded profiles and compatibility packs share the one standard packet construction.
+        assertTrue(source.contains("packetConstructor.newInstance(tagMap)"));
+        assertTrue(source.contains("injectVelocityTagMap(player, profile.velocityTagMap())"));
         assertTrue(source.contains("currentState != configurationState"));
         assertFalse(source.contains("setAccessible"));
         assertFalse(source.contains("DeferredByteBufHolder"));

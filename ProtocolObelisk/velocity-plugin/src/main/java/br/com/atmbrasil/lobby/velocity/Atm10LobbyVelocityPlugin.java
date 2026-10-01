@@ -133,6 +133,7 @@ public final class Atm10LobbyVelocityPlugin {
     static final long SILENT_GEAR_ACK_TIMEOUT_MILLIS = 30_000L;
     /** Must finish before Velocity's five-second PlayerFinishConfigurationEvent deadline. */
     private static final long DYNAMIC_REGISTRY_INJECTION_TIMEOUT_MILLIS = 4_000L;
+    private static final long ENCHANTMENT_REPLACEMENT_SETTLE_TIMEOUT_MILLIS = 1_500L;
     /** Pipeline mutation must finish before the CONFIGURATION gate is released. */
     private static final long BLOCK_STATE_TRANSLATOR_ATTACH_TIMEOUT_MILLIS = 2_000L;
     /** Bounds an unhealthy optional adapter; timeout resumes Paper passthrough, never admission. */
@@ -189,6 +190,9 @@ public final class Atm10LobbyVelocityPlugin {
             Optional.empty();
     private volatile Optional<Atm10Normal81ServerConfigCatalog.Catalog>
             exactServerConfigCatalog = Optional.empty();
+    private volatile List<CompatibilityPack> compatibilityPacks = List.of();
+    private final java.util.concurrent.atomic.AtomicInteger compatibilityReportsWritten =
+            new java.util.concurrent.atomic.AtomicInteger();
     private volatile VelocityRegistryInjector registryInjector;
     private volatile VelocityTagsInjector registryTagsInjector;
     private volatile VelocityRegistryReplacementGuard registryReplacementGuard;
@@ -259,6 +263,7 @@ public final class Atm10LobbyVelocityPlugin {
                     Optional.empty();
             Optional<Atm10Normal81ServerConfigCatalog.Catalog>
                     loadedExactServerConfigCatalog = Optional.empty();
+            List<CompatibilityPack> loadedCompatibilityPacks = List.of();
             VelocityRegistryInjector loadedRegistryInjector = null;
             VelocityTagsInjector loadedRegistryTagsInjector = null;
             VelocityRegistryReplacementGuard loadedRegistryReplacementGuard = null;
@@ -315,6 +320,9 @@ public final class Atm10LobbyVelocityPlugin {
                                         + "cardinal admission and routing remain active, "
                                         + "recipe lifecycle will be WITHHELD",
                                 failure));
+                if (loaded.enableCompatibilityPacks()) {
+                    loadedCompatibilityPacks = loadCompatibilityPacks();
+                }
                 RegistryShimCatalog.fullEnchantmentQuarantineFailure(
                                 loaded.maximumRegistryShimBytes())
                         .ifPresent(failure -> consoleLogger.warn(
@@ -363,6 +371,24 @@ public final class Atm10LobbyVelocityPlugin {
                                 .toList();
                     }
                 }
+                if (loadedCompatibilityPacks.stream()
+                        .anyMatch(pack -> !pack.tailRegistries().isEmpty()
+                                || !pack.paperRegistryExtensions().isEmpty()
+                                || pack.enchantmentExtension().isPresent())) {
+                    if (loadedRegistryInjector == null) {
+                        loadedRegistryInjector = VelocityRegistryInjector.resolve(
+                                loaded.expectedMinecraftProtocol());
+                    }
+                    if (loadedRegistryTagsInjector == null) {
+                        loadedRegistryTagsInjector = resolveRegistryTagsInjectorOrPassthrough(
+                                () -> VelocityTagsInjector.resolve(
+                                        loaded.expectedMinecraftProtocol()),
+                                failure -> consoleLogger.warn(
+                                        "Velocity CONFIG tags adapter is unavailable; compatibility "
+                                                + "packs will deliver registries without their tags",
+                                        failure));
+                    }
+                }
                 if (loaded.enableBuiltInSilentGearSnapshotBridge()) {
                     loadedSilentGearProfiles = loadReviewedSilentGearProfiles(loaded);
                     if (loadedRegistryInjector == null
@@ -393,9 +419,13 @@ public final class Atm10LobbyVelocityPlugin {
                     }
                 }
                 loadedReviewedBlockStateProfiles = loadBundledReviewedBlockStateProfiles();
-                if (!loadedReviewedBlockStateProfiles.reviewedProfiles().isEmpty()) {
+                List<BlockStateTranslationProfile> translatableProfiles = new ArrayList<>(
+                        loadedReviewedBlockStateProfiles.reviewedProfiles());
+                loadedCompatibilityPacks.forEach(pack ->
+                        pack.blockStates().ifPresent(translatableProfiles::add));
+                if (!translatableProfiles.isEmpty()) {
                     List<BlockStateTranslationProfile> reviewedProfiles =
-                            loadedReviewedBlockStateProfiles.reviewedProfiles();
+                            List.copyOf(translatableProfiles);
                     loadedLobbyPlayPacketTranslator = resolveBlockStateTranslatorOrPassthrough(
                             () -> VelocityLobbyPlayPacketTranslator.resolve(reviewedProfiles),
                             failure -> consoleLogger.warn(
@@ -429,6 +459,7 @@ public final class Atm10LobbyVelocityPlugin {
             atm10Normal82GiselleExtensionPacket =
                     loadedAtm10Normal82GiselleExtensionPacket;
             exactServerConfigCatalog = loadedExactServerConfigCatalog;
+            compatibilityPacks = loadedCompatibilityPacks;
             registryInjector = loadedRegistryInjector;
             registryTagsInjector = loadedRegistryTagsInjector;
             registryReplacementGuard = loadedRegistryReplacementGuard;
@@ -841,6 +872,7 @@ public final class Atm10LobbyVelocityPlugin {
             registryShimPackets = List.of();
             atm10Normal82GiselleExtensionPacket = Optional.empty();
             exactServerConfigCatalog = Optional.empty();
+            compatibilityPacks = List.of();
             registryInjector = null;
             registryReplacementGuard = null;
             lobbyPlayPacketTranslator = null;
@@ -863,6 +895,7 @@ public final class Atm10LobbyVelocityPlugin {
             registryShimPackets = List.of();
             atm10Normal82GiselleExtensionPacket = Optional.empty();
             exactServerConfigCatalog = Optional.empty();
+            compatibilityPacks = List.of();
             registryInjector = null;
             registryReplacementGuard = null;
             lobbyPlayPacketTranslator = null;
@@ -2079,7 +2112,8 @@ public final class Atm10LobbyVelocityPlugin {
                     new PaperRecipeLifecyclePolicy.Context(
                             session.playBootstrapSent,
                             session.negotiation != ClientNegotiation.NEOFORGE
-                                    || session.silentGearProfile != null,
+                                    || session.silentGearProfile != null
+                                    || compatibilityPackDeliveryComplete(session, currentConfig),
                             session.configurationPrefixWriteComplete,
                             java.util.Objects.requireNonNullElse(
                                     structuralClientContract(session), ""),
@@ -2223,6 +2257,9 @@ public final class Atm10LobbyVelocityPlugin {
         session.registryReplacementStatus = "NOT_SELECTED";
         session.registryReplacementMode = null;
         session.registryReplacementEvidenceId = "none";
+        session.compatibilityPack = null;
+        session.compatibilityPackStatus = "NOT_EVALUATED";
+        session.compatibilityPackRegistriesDelivered = false;
         session.advertisedNamespaces = Set.of();
         session.queryBytes = 0;
         session.playSinkChannels = List.of();
@@ -2476,6 +2513,30 @@ public final class Atm10LobbyVelocityPlugin {
                         minecraftProtocol,
                         normalizedClientContractSha256,
                         reviewedConfigCatalog);
+                // Embedded reviewed profiles keep precedence; a compatibility pack serves every
+                // other client whose captured server would have accepted it under NeoForge rules.
+                boolean embeddedStructuralEvidence = matchingSilentGearProfile != null
+                        || reviewedNormal81Variant.isPresent()
+                        || reviewedNormal80Variant.isPresent()
+                        || ReviewedClientContractEvidence.ATM10_NORMAL_7_3.matches(
+                                minecraftProtocol, contractSignatures)
+                        || configPlan.reviewedCatalogApplied();
+                CompatibilityPackSelector.Selection packSelection = null;
+                CompatibilityPack selectedPack = null;
+                if (!embeddedStructuralEvidence && currentConfig.enableCompatibilityPacks()) {
+                    packSelection = CompatibilityPackSelector.select(
+                            minecraftProtocol,
+                            decodedClientRegistry,
+                            compatibilityPacks,
+                            currentConfig.forcedCompatibilityPack());
+                    selectedPack = packSelection.pack().orElse(null);
+                    if (selectedPack != null) {
+                        configPlan = TransientServerConfigPlanner.withCompatibilityPack(
+                                configPlan,
+                                selectedPack,
+                                currentConfig.compatibilityPackCapturedServerConfigs());
+                    }
+                }
                 PlaySinkReservation reservation = reservePlaySinkChannels(
                         plan.channels(), currentConfig);
 
@@ -2530,6 +2591,10 @@ public final class Atm10LobbyVelocityPlugin {
                                     .stream().filter(channel -> channel.id().startsWith("voicechat:"))
                                     .count());
                 }
+                if (packSelection != null) {
+                    logCompatibilityPackSelection(
+                            player, session, decodedClientRegistry, packSelection, currentConfig);
+                }
                 session.silentGearProfile = matchingSilentGearProfile;
                 session.ae2JeiSessionOptimizationSelected =
                         cachedPlan.ae2JeiSessionOptimizationSelected();
@@ -2557,7 +2622,15 @@ public final class Atm10LobbyVelocityPlugin {
                 session.omittedPlaySinkChannels = Math.addExact(
                         plan.omittedAutomaticChannelCount(), reservation.omittedByCapacity());
                 session.transientServerConfigs = configPlan.configs();
-                session.transientServerConfigSource = configPlan.reviewedCatalogApplied()
+                session.compatibilityPack = selectedPack;
+                session.compatibilityPackStatus = embeddedStructuralEvidence
+                        ? "EMBEDDED_PROFILE_PRECEDENCE"
+                        : packSelection == null
+                                ? "DISABLED"
+                                : packSelection.status().name();
+                session.transientServerConfigSource = selectedPack != null
+                        ? "compatibility-pack:" + selectedPack.packId()
+                        : configPlan.reviewedCatalogApplied()
                                 ? "reviewed-exact-runtime-catalog"
                         : configPlan.derivedConfigCount() > 0
                                 ? "derived-fallback"
@@ -2569,6 +2642,7 @@ public final class Atm10LobbyVelocityPlugin {
                         configPlan.omittedDerivedConfigCount();
                 session.ignoredTransientConfigNamespaces = configPlan.ignoredNamespaceCount();
                 session.reviewedTransientConfigCatalog = configPlan.reviewedCatalogApplied()
+                                && selectedPack == null
                         ? reviewedConfigCatalog.orElseThrow()
                         : null;
                 session.reviewedTransientConfigCatalogId = configPlan.reviewedCatalogId();
@@ -2795,6 +2869,17 @@ public final class Atm10LobbyVelocityPlugin {
         Optional<BlockStateTranslationProfile> exact = reviewedBlockStateProfiles
                 .findStructuralEnrichment(
                         minecraftProtocol, structuralClientContract(session));
+        CompatibilityPack pack = session.compatibilityPack;
+        if (exact.isEmpty() && pack != null && pack.blockStates().isPresent()) {
+            if (lobbyPlayPacketTranslator == null) {
+                return BlockStateTranslationDecision.unavailable(
+                        "COMPATIBILITY_PACK_TRANSLATOR_UNAVAILABLE");
+            }
+            BlockStateTranslationProfile profile = pack.blockStates().orElseThrow();
+            return BlockStateTranslationDecision.selected(
+                    new BlockStateTranslationSelection(profile, "compatibility-pack-" + pack.packId()),
+                    "COMPATIBILITY_PACK");
+        }
         if (exact.isPresent()) {
             if (lobbyPlayPacketTranslator == null) {
                 return BlockStateTranslationDecision.unavailable(
@@ -3082,13 +3167,26 @@ public final class Atm10LobbyVelocityPlugin {
                 clientProtocol, structuralClientContract(session));
         boolean giselle82Merge = session.atm10Normal82GiselleMergeEvidence;
         final Optional<Selection> selected;
+        CompatibilityPack pack = session.compatibilityPack;
+        if (pack != null) {
+            // A selected pack is the sole structural source for this session: neither the 8.1
+            // resource nor the 8.2-lineage Giselle merge may be combined with it.
+            giselle82Merge = false;
+        }
         try {
             Optional<RegistryShimPacket> exact81 =
                     RegistryShimCatalog.selectPaperRegistryReplacement(
                             clientProtocol,
                             registryShimPackets,
                             structuralClientContract(session));
-            if (exact81.isPresent()) {
+            if (pack != null) {
+                selected = currentConfig.compatibilityPackReplaceEnchantmentRegistry()
+                        ? pack.enchantmentRegistry().map(packet -> new Selection(
+                                packet,
+                                RegistryReplacementGuardHandler.TransformMode.PACK_REPLACEMENT,
+                                "pack:" + pack.packId()))
+                        : Optional.empty();
+            } else if (exact81.isPresent()) {
                 selected = Optional.of(new Selection(
                         exact81.orElseThrow(),
                         RegistryReplacementGuardHandler.TransformMode.EXACT_REPLACEMENT,
@@ -3342,7 +3440,29 @@ public final class Atm10LobbyVelocityPlugin {
                                                 + session.clientRegistryFingerprint);
                         prefix.addOwned(NEOFORGE_NETWORK.getId(), setup);
                         prefix.addOwned(MINECRAFT_REGISTER.getId(), registration);
-                        if (reviewedConfigCatalog == null) {
+                        CompatibilityPack configPack = session.compatibilityPack;
+                        if (reviewedConfigCatalog == null
+                                && configPack != null
+                                && TransientServerConfigPlanner.isCompatibilityPackCatalog(
+                                        session.reviewedTransientConfigCatalogId)) {
+                            boolean captured = !session.reviewedTransientConfigCatalogId.endsWith(
+                                    TransientServerConfigPlanner.EMPTY_CONTENTS_SUFFIX);
+                            if (!session.transientServerConfigs.equals(
+                                    configPack.serverConfigNames())) {
+                                throw new IllegalStateException(
+                                        "compatibility-pack SERVER-config plan diverged from its pack");
+                            }
+                            for (CompatibilityPack.ServerConfig config : configPack.serverConfigs()) {
+                                prefix.addOwned(
+                                        NEOFORGE_CONFIG_FILE.getId(),
+                                        captured
+                                                ? config.encodedPayload()
+                                                : NeoForgeHandshakeCodec.encodeConfigFilePayload(
+                                                        config.name(),
+                                                        new byte[0],
+                                                        currentConfig.limits().maximumSetupBytes()));
+                            }
+                        } else if (reviewedConfigCatalog == null) {
                             for (String fileName : session.transientServerConfigs) {
                                 byte[] configPayload =
                                         NeoForgeHandshakeCodec.encodeConfigFilePayload(
@@ -3759,6 +3879,10 @@ public final class Atm10LobbyVelocityPlugin {
 
     private void injectDynamicRegistryShims(
             Player player, BridgeSession session, BridgeConfig currentConfig) {
+        if (session.compatibilityPack != null) {
+            injectCompatibilityPackRegistries(player, session, currentConfig);
+            return;
+        }
         DynamicRegistryInjectionFence<BridgeSession, SilentGearEmbeddedProfile> fence =
                 new DynamicRegistryInjectionFence<>(
                         player.getUniqueId(),
@@ -3894,6 +4018,165 @@ public final class Atm10LobbyVelocityPlugin {
                                     + stableFailureMessage(cause));
                     return;
                 }
+                finishNeoForgeLobbyHandshake(player, session, currentConfig, packets);
+            }
+        });
+    }
+
+    /**
+     * Appends a selected pack's registries after every Paper registry packet, then one tags
+     * packet for exactly the registries whose numeric ids this pack defined.
+     *
+     * <p>The batch first extends the registries Paper sent with their non-vanilla entries (the
+     * client appends repeated packets for one registry, so Paper's ids stay first and unchanged),
+     * then appends the registries Paper never sends. Tags for Paper's registries stay Paper's.
+     * {@code minecraft:enchantment} is handled in place when the pack's replacement actually
+     * replaced Paper's packet (proven by its completed receipt): its tags are then the pack's.
+     * Otherwise the pack's non-vanilla enchantments are appended like any other extension.</p>
+     */
+    private void injectCompatibilityPackRegistries(
+            Player player, BridgeSession session, BridgeConfig currentConfig) {
+        CompatibilityPack pack = session.compatibilityPack;
+        DynamicRegistryInjectionFence<BridgeSession, SilentGearEmbeddedProfile> fence =
+                new DynamicRegistryInjectionFence<>(
+                        player.getUniqueId(),
+                        session,
+                        session.lobbyCycleGeneration,
+                        session.silentGearProfile);
+        session.state = State.LOBBY_INJECTING_REGISTRIES;
+        // The settle wait and the write share one budget inside Velocity's event deadline.
+        long deadlineNanos = System.nanoTime()
+                + TimeUnit.MILLISECONDS.toNanos(DYNAMIC_REGISTRY_INJECTION_TIMEOUT_MILLIS);
+        RegistryShimReceipt replacementReceipt = pack.enchantmentRegistry()
+                .map(RegistryShimReceipt::from)
+                .orElse(null);
+        VelocityRegistryReplacementGuard.Lease lease = session.registryReplacementLease;
+        if (replacementReceipt == null
+                || session.registryShimReceipts.contains(replacementReceipt)
+                || lease == null) {
+            writeCompatibilityPackRegistries(player, session, currentConfig, fence, deadlineNanos,
+                    replacementReceipt != null
+                            && session.registryShimReceipts.contains(replacementReceipt));
+            return;
+        }
+        // Paper's enchantment packet is already queued ahead of this batch, but its receipt is
+        // recorded only once that write completes. Waiting on the guard's own outcome (on a copy,
+        // so a timeout never fails the guard) decides between the pack's enchantment tags and
+        // appending its enchantments to Paper's registry without racing that write.
+        lease.completion().copy()
+                .orTimeout(ENCHANTMENT_REPLACEMENT_SETTLE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
+                .handle((receipt, failure) -> failure == null && replacementReceipt.equals(receipt))
+                .thenAccept(replaced -> {
+                    synchronized (session) {
+                        if (!dynamicRegistryInjectionIsCurrent(player, session, fence)) {
+                            return;
+                        }
+                        try {
+                            writeCompatibilityPackRegistries(
+                                    player, session, currentConfig, fence, deadlineNanos, replaced);
+                        } catch (IllegalArgumentException | IllegalStateException exception) {
+                            reject(player, session,
+                                    "could not append compatibility-pack registries: "
+                                            + exception.getMessage());
+                        }
+                    }
+                });
+    }
+
+    private void writeCompatibilityPackRegistries(
+            Player player,
+            BridgeSession session,
+            BridgeConfig currentConfig,
+            DynamicRegistryInjectionFence<BridgeSession, SilentGearEmbeddedProfile> fence,
+            long deadlineNanos,
+            boolean enchantmentReplaced) {
+        CompatibilityPack pack = session.compatibilityPack;
+        long timeoutMillis = Math.max(1L,
+                TimeUnit.NANOSECONDS.toMillis(deadlineNanos - System.nanoTime()));
+        ArrayList<RegistryShimPacket> batch = new ArrayList<>(pack.paperRegistryExtensions());
+        if (!enchantmentReplaced) {
+            pack.enchantmentExtension().ifPresent(batch::add);
+        }
+        int extensionCount = batch.size();
+        batch.addAll(pack.tailRegistries());
+        List<RegistryShimPacket> packets = List.copyOf(batch);
+        LinkedHashSet<String> delivered = new LinkedHashSet<>();
+        pack.tailRegistries().forEach(packet -> delivered.add(packet.registryId()));
+        if (enchantmentReplaced) {
+            delivered.add(CompatibilityPack.ENCHANTMENT_REGISTRY_ID);
+        }
+        Map<String, Map<String, int[]>> tags = pack.tagsFor(delivered);
+        VelocityRegistryInjector injector = registryInjector;
+        VelocityTagsInjector tagsInjector = registryTagsInjector;
+        if (!packets.isEmpty() && injector == null) {
+            reject(player, session, "dynamic registry injector is unavailable for compatibility pack");
+            return;
+        }
+        boolean writeTags = !tags.isEmpty() && tagsInjector != null;
+        logger.info(
+                "Starting compatibility-pack registry injection for {}: pack={}, extensions={}, "
+                        + "tailRegistries={}, entries={}, bytes={}, tagRegistries={}, "
+                        + "enchantmentReplaced={}, timeoutMs={}, lifecycle=post-Paper-registry-tail",
+                player.getUsername(),
+                pack.packId(),
+                extensionCount,
+                packets.size() - extensionCount,
+                packets.stream().mapToInt(RegistryShimPacket::entryCount).sum(),
+                packets.stream().mapToInt(RegistryShimPacket::packetBytes).sum(),
+                writeTags ? tags.size() : 0,
+                enchantmentReplaced,
+                timeoutMillis);
+        CompletableFuture<Void> injection = packets.isEmpty()
+                ? CompletableFuture.completedFuture(null)
+                : injector.injectBatch(player, packets);
+        if (writeTags) {
+            injection = injection.thenCompose(ignored -> {
+                synchronized (session) {
+                    if (!dynamicRegistryInjectionIsCurrent(player, session, fence)) {
+                        return CompletableFuture.failedFuture(new IllegalStateException(
+                                "compatibility-pack tag injection attempt became stale"));
+                    }
+                    return tagsInjector.injectTagMap(player, tags);
+                }
+            });
+        }
+        CompletableFuture<Void> injectionResult = injection;
+        CompletableFuture.delayedExecutor(
+                timeoutMillis, TimeUnit.MILLISECONDS).execute(() -> {
+                    synchronized (session) {
+                        if (injectionResult.isDone()
+                                || !dynamicRegistryInjectionIsCurrent(player, session, fence)) {
+                            return;
+                        }
+                        reject(player, session,
+                                "compatibility-pack registry injection timed out after "
+                                        + timeoutMillis + " ms");
+                    }
+                });
+        injectionResult.whenComplete((ignored, failure) -> {
+            synchronized (session) {
+                if (!dynamicRegistryInjectionIsCurrent(player, session, fence)) {
+                    return;
+                }
+                if (failure != null) {
+                    Throwable cause = unwrapCompletionFailure(failure);
+                    consoleLogger.error(
+                            "Compatibility-pack registry injection failed for {} [{}]",
+                            player.getUsername(), player.getUniqueId(), cause);
+                    reject(player, session,
+                            "compatibility-pack registry injection failed: "
+                                    + stableFailureMessage(cause));
+                    return;
+                }
+                session.compatibilityPackRegistriesDelivered = writeTags || tags.isEmpty();
+                logger.info(
+                        "Completed compatibility-pack registry injection for {}: pack={}, "
+                                + "registries={}, tagRegistries={}, flushes={}",
+                        player.getUsername(),
+                        pack.packId(),
+                        packets.size(),
+                        writeTags ? tags.size() : 0,
+                        (packets.isEmpty() ? 0 : 1) + (writeTags ? 1 : 0));
                 finishNeoForgeLobbyHandshake(player, session, currentConfig, packets);
             }
         });
@@ -4076,6 +4359,36 @@ public final class Atm10LobbyVelocityPlugin {
     private static String channelNamespace(String channelId) {
         int separator = channelId.indexOf(':');
         return separator < 0 ? channelId : channelId.substring(0, separator);
+    }
+
+    /**
+     * A selected pack satisfies the recipe-time structural requirement only when every part a
+     * real server would have delivered actually completed: the SERVER-config prefix write, the
+     * extensions of Paper's registries, the registry tail and its tags, and the enchantment
+     * replacement when enabled (otherwise the enchantment extension).
+     */
+    private static boolean compatibilityPackDeliveryComplete(
+            BridgeSession session, BridgeConfig currentConfig) {
+        CompatibilityPack pack = session.compatibilityPack;
+        if (pack == null || currentConfig == null || !currentConfig.compatibilityPackReleaseRecipes()
+                || !session.configurationPrefixWriteComplete
+                || !session.compatibilityPackRegistriesDelivered) {
+            return false;
+        }
+        ArrayList<RegistryShimPacket> required = new ArrayList<>(pack.paperRegistryExtensions());
+        required.addAll(pack.tailRegistries());
+        if (currentConfig.compatibilityPackReplaceEnchantmentRegistry()
+                && pack.enchantmentRegistry().isPresent()) {
+            required.add(pack.enchantmentRegistry().orElseThrow());
+        } else {
+            pack.enchantmentExtension().ifPresent(required::add);
+        }
+        for (RegistryShimPacket packet : required) {
+            if (!session.registryShimReceipts.contains(RegistryShimReceipt.from(packet))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void sendLobbyReady(
@@ -4720,6 +5033,194 @@ public final class Atm10LobbyVelocityPlugin {
                         "de39e16287bfa83396c9f54b1403cf5937d74b4c2ad819922f5540d7e219e419"));
     }
 
+    /**
+     * Loads every {@code .obpack} from {@code plugins/protocolobelisk/packs/}.
+     *
+     * <p>Each pack is validated independently. A corrupt, unreadable or duplicate pack is
+     * quarantined with a warning; it never disables the plugin or changes admission.</p>
+     */
+    private List<CompatibilityPack> loadCompatibilityPacks() {
+        Path directory = dataDirectory.resolve(BridgeConfig.COMPATIBILITY_PACK_DIRECTORY);
+        List<Path> files;
+        try {
+            java.nio.file.Files.createDirectories(directory);
+            try (var stream = java.nio.file.Files.list(directory)) {
+                files = stream
+                        .filter(path -> path.getFileName().toString().endsWith(".obpack"))
+                        .filter(java.nio.file.Files::isRegularFile)
+                        .sorted()
+                        .toList();
+            }
+        } catch (IOException | RuntimeException failure) {
+            consoleLogger.warn(
+                    "Compatibility packs unavailable: could not list {}; generic enrichment only",
+                    directory, failure);
+            return List.of();
+        }
+        LinkedHashMap<String, CompatibilityPack> byId = new LinkedHashMap<>();
+        Set<String> duplicated = new LinkedHashSet<>();
+        for (Path file : files) {
+            try {
+                CompatibilityPack pack = CompatibilityPack.load(file);
+                if (byId.putIfAbsent(pack.packId(), pack) != null) {
+                    duplicated.add(pack.packId());
+                }
+            } catch (IOException | RuntimeException failure) {
+                consoleLogger.warn(
+                        "Quarantined compatibility pack {}: {}; admission and routing unchanged",
+                        file.getFileName(), stableFailureMessage(failure));
+            }
+        }
+        duplicated.forEach(packId -> {
+            byId.remove(packId);
+            consoleLogger.warn(
+                    "Quarantined every compatibility pack declaring id '{}': the id is duplicated "
+                            + "in {}; keep exactly one file per pack id",
+                    packId, directory);
+        });
+        byId.values().forEach(pack -> consoleLogger.info(
+                "Compatibility pack armed: id={}, name='{}', file={}, sha256={}, NeoForge={}, "
+                        + "mods={}, serverChannels={}, serverConfigs={}, tailRegistries={}, "
+                        + "paperRegistryExtensions={} ({} entries), enchantmentRegistry={}, "
+                        + "blockStates={}, quarantinedRegistries={}, "
+                        + "selection=NEOFORGE_NEGOTIATION, admissionDecision=UNCHANGED_CARDINAL",
+                pack.packId(),
+                pack.displayName(),
+                pack.fileName(),
+                pack.fileSha256(),
+                pack.neoForgeVersion(),
+                pack.modCount(),
+                pack.serverChannels().channelCount(),
+                pack.serverConfigs().size(),
+                pack.tailRegistries().size(),
+                pack.paperRegistryExtensions().size(),
+                pack.paperRegistryExtensions().stream().mapToInt(RegistryShimPacket::entryCount).sum(),
+                pack.enchantmentRegistry().map(packet -> packet.entryCount() + " entries")
+                        .orElse("absent"),
+                pack.blockStates().map(profile -> profile.clientGlobalStateCount() + " states")
+                        .orElse("absent"),
+                pack.quarantinedRegistries()));
+        if (byId.isEmpty()) {
+            consoleLogger.info(
+                    "No compatibility packs installed in {}; capture one with tools/obelisk-capture",
+                    directory);
+        }
+        return List.copyOf(byId.values());
+    }
+
+    private static final int MAXIMUM_COMPATIBILITY_REPORTS = 128;
+
+    private void logCompatibilityPackSelection(
+            Player player,
+            BridgeSession session,
+            Registry clientRegistry,
+            CompatibilityPackSelector.Selection selection,
+            BridgeConfig currentConfig) {
+        if (selection.pack().isPresent()) {
+            CompatibilityPack pack = selection.pack().orElseThrow();
+            consoleLogger.info(
+                    "compatibilityPack={} selected for {}: status={}, clientContract={}, "
+                            + "serverConfigs={} ({}), tailRegistries={}, enchantmentRegistry={}, "
+                            + "blockStates={}, admissionDecision=UNCHANGED_CARDINAL, aclMutation=false",
+                    pack.packId(),
+                    player.getUsername(),
+                    selection.status(),
+                    shortFingerprint(session.fullClientContractSha256),
+                    pack.serverConfigs().size(),
+                    currentConfig.compatibilityPackCapturedServerConfigs() ? "captured" : "empty",
+                    pack.tailRegistries().size(),
+                    currentConfig.compatibilityPackReplaceEnchantmentRegistry()
+                            && pack.enchantmentRegistry().isPresent() ? "replace" : "paper",
+                    pack.blockStates().isPresent() ? "translate" : "absent");
+            return;
+        }
+        if (selection.status() == CompatibilityPackSelector.Status.NO_PACKS_INSTALLED) {
+            return;
+        }
+        Optional<CompatibilityPackSelector.Evaluation> closest = selection.closestMismatch();
+        consoleLogger.warn(
+                "compatibilityPack=none for {}: status={}, clientContract={}, closestPack={}, "
+                        + "mismatches={}, firstMismatches={}; generic enrichment only, "
+                        + "admissionDecision=UNCHANGED_CARDINAL. Capture this modpack version "
+                        + "with tools/obelisk-capture if the client is a new pack release",
+                player.getUsername(),
+                selection.status(),
+                shortFingerprint(session.fullClientContractSha256),
+                closest.map(evaluation -> evaluation.pack().packId()).orElse("none"),
+                closest.map(CompatibilityPackSelector.Evaluation::mismatchCount).orElse(0),
+                closest.map(evaluation -> evaluation.mismatches().stream().limit(5).toList())
+                        .orElse(List.of()));
+        if (currentConfig.compatibilityPackMismatchReports()) {
+            writeCompatibilityReport(player.getUsername(), session.fullClientContractSha256,
+                    clientRegistry, selection);
+        }
+    }
+
+    /**
+     * Writes one bounded, human-readable file per unseen client contract that matched no pack:
+     * which channels and versions differ from each installed pack, plus the client's complete
+     * channel list. It is the operator's signal that a new modpack release needs a capture.
+     */
+    private void writeCompatibilityReport(
+            String username,
+            String clientContract,
+            Registry clientRegistry,
+            CompatibilityPackSelector.Selection selection) {
+        if (clientContract == null || !clientContract.matches("[0-9a-f]{64}")
+                || compatibilityReportsWritten.get() >= MAXIMUM_COMPATIBILITY_REPORTS) {
+            return;
+        }
+        Path file = dataDirectory.resolve(BridgeConfig.COMPATIBILITY_REPORT_DIRECTORY)
+                .resolve(clientContract.substring(0, 16) + ".txt");
+        StringBuilder report = new StringBuilder()
+                .append("# ProtocolObelisk compatibility report\n")
+                .append("client-contract=").append(clientContract).append('\n')
+                .append("first-player=").append(username).append('\n')
+                .append("selection=").append(selection.status()).append('\n')
+                .append("client-channels=").append(clientRegistry.channelCount()).append("\n\n");
+        for (CompatibilityPackSelector.Evaluation evaluation : selection.evaluations()) {
+            report.append("## pack ").append(evaluation.pack().packId())
+                    .append(" (").append(evaluation.pack().displayName()).append(")\n")
+                    .append("compatible=").append(evaluation.compatible())
+                    .append(", sharedChannels=").append(evaluation.sharedChannels())
+                    .append(", mismatches=").append(evaluation.mismatchCount()).append('\n');
+            evaluation.mismatches().forEach(line -> report.append("- ").append(line).append('\n'));
+            report.append('\n');
+        }
+        report.append("## client channels (protocol, id, version, flow, requirement)\n");
+        for (int protocol : List.of(
+                NeoForgeHandshakeCodec.CONFIGURATION_PROTOCOL, NeoForgeHandshakeCodec.PLAY_PROTOCOL)) {
+            clientRegistry.channelsFor(protocol).stream()
+                    .sorted(java.util.Comparator.comparing(Channel::id))
+                    .forEach(channel -> report
+                            .append(protocol == NeoForgeHandshakeCodec.PLAY_PROTOCOL
+                                    ? "play" : "configuration")
+                            .append('\t').append(channel.id())
+                            .append('\t').append(channel.version())
+                            .append('\t').append(channel.flow().name().toLowerCase(java.util.Locale.ROOT))
+                            .append('\t').append(channel.optional() ? "optional" : "required")
+                            .append('\n'));
+        }
+        CompletableFuture.runAsync(() -> {
+            try {
+                java.nio.file.Files.createDirectories(file.getParent());
+                if (java.nio.file.Files.exists(file)) {
+                    return;
+                }
+                java.nio.file.Files.writeString(file, report.toString(), StandardCharsets.UTF_8,
+                        java.nio.file.StandardOpenOption.CREATE_NEW,
+                        java.nio.file.StandardOpenOption.WRITE);
+                compatibilityReportsWritten.incrementAndGet();
+                consoleLogger.info("Wrote compatibility report {}", file);
+            } catch (java.nio.file.FileAlreadyExistsException ignored) {
+                // Another session with the same contract wrote it first.
+            } catch (IOException | RuntimeException failure) {
+                consoleLogger.warn("Could not write compatibility report {}: {}",
+                        file, stableFailureMessage(failure));
+            }
+        });
+    }
+
     private ReviewedBlockStateProfileCatalog loadBundledReviewedBlockStateProfiles() {
         ReviewedBlockStateProfileCatalog catalog =
                 ReviewedBlockStateProfileCatalog.loadReviewed(
@@ -5036,6 +5537,9 @@ public final class Atm10LobbyVelocityPlugin {
         private RegistryReplacementGuardHandler.TransformMode registryReplacementMode;
         private String registryReplacementEvidenceId = "none";
         private String registryReplacementStatus = "NOT_SELECTED";
+        private CompatibilityPack compatibilityPack;
+        private String compatibilityPackStatus = "NOT_EVALUATED";
+        private boolean compatibilityPackRegistriesDelivered;
         private Set<String> advertisedNamespaces = Set.of();
         private List<Channel> playSinkChannels = List.of();
         private Set<String> playSinkChannelIds = Set.of();

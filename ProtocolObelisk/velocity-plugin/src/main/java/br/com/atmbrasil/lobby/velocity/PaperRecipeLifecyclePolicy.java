@@ -97,7 +97,11 @@ final class PaperRecipeLifecyclePolicy {
         }
         Basis basis = ATM10_81_FULL_CLIENT_CONTRACT_SHA256.equals(
                 context.fullClientContractSha256())
-                ? Basis.EXACT_ATM10_81_RUNTIME_CATALOG : Basis.REVIEWED_STRUCTURAL_PROFILE;
+                ? Basis.EXACT_ATM10_81_RUNTIME_CATALOG
+                : TransientServerConfigPlanner.isCompatibilityPackCatalog(
+                                context.serverConfigCatalogId())
+                        ? Basis.COMPATIBILITY_PACK
+                        : Basis.REVIEWED_STRUCTURAL_PROFILE;
         if (apothicAdvertised && !apothicBootstrapSent) {
             return new Evaluation(
                     basis, Decision.WITHHOLD_UNSATISFIED_APOTHIC_DEPENDENCY,
@@ -333,6 +337,7 @@ final class PaperRecipeLifecyclePolicy {
     enum Basis {
         REVIEWED_STRUCTURAL_PROFILE,
         EXACT_ATM10_81_RUNTIME_CATALOG,
+        COMPATIBILITY_PACK,
         NONE
     }
 

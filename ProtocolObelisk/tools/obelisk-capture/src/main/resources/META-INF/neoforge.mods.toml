@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="protocolobelisk_capture"
+version="1.0.0"
+displayName="ProtocolObelisk Capture (build-only)"
+description='''
+Build-only capture of a NeoForge 1.21.1 server's CONFIGURATION surface (channels, SERVER configs,
+synchronized registries, tags and vanilla BlockState projection) for ProtocolObelisk packs.
+Never install this on a production server or client.
+'''
+
+[[dependencies.protocolobelisk_capture]]
+modId="neoforge"
+type="required"
+versionRange="[21.1,21.2)"
+ordering="NONE"
+side="SERVER"
+
+[[dependencies.protocolobelisk_capture]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1,1.21.2)"
+ordering="NONE"
+side="SERVER"

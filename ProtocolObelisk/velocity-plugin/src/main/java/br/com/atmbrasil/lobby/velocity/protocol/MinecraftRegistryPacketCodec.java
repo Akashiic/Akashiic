@@ -10,12 +10,15 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
@@ -29,7 +32,9 @@ import java.util.regex.Pattern;
 public final class MinecraftRegistryPacketCodec {
     private static final Pattern RESOURCE_LOCATION = Pattern.compile(
             "[a-z0-9_.-]+:[a-z0-9/._-]+");
-    private static final int MAXIMUM_ENTRIES = 256;
+    // Real modded registries exceed 256 entries (moonlight:soft_fluid has 462 in ATM10); every
+    // packet stays bounded by its 1 MiB body and by the NBT node budget below.
+    private static final int MAXIMUM_ENTRIES = 65_535;
     private static final int MAXIMUM_COMPOUND_FIELDS = 256;
     private static final int MAXIMUM_LIST_ELEMENTS = 256;
     private static final int MAXIMUM_NBT_DEPTH = 32;
@@ -245,6 +250,87 @@ public final class MinecraftRegistryPacketCodec {
         return merged;
     }
 
+    /**
+     * Copies the entries accepted by {@code keep} into a new body for the same registry.
+     *
+     * <p>The input is fully validated first. Kept entries retain their original bytes and
+     * order; only the entry-count VarInt is rewritten. Returns empty when nothing is kept, since
+     * a registry-data packet cannot be empty.</p>
+     */
+    public static Optional<byte[]> selectEntries(
+            byte[] packetBody,
+            Predicate<String> keep,
+            int maximumBytes) throws ProtocolViolationException {
+        Objects.requireNonNull(packetBody, "packetBody");
+        Objects.requireNonNull(keep, "keep");
+        if (maximumBytes < 1 || maximumBytes > 1_048_576) {
+            throw new IllegalArgumentException("maximumBytes is outside bounds");
+        }
+        PacketLayout layout = parseLayout(packetBody, maximumBytes);
+        ArrayList<Integer> kept = new ArrayList<>();
+        for (int index = 0; index < layout.entryIds().size(); index++) {
+            if (keep.test(layout.entryIds().get(index))) {
+                kept.add(index);
+            }
+        }
+        if (kept.isEmpty()) {
+            return Optional.empty();
+        }
+        BoundedOutputStream bounded = new BoundedOutputStream(maximumBytes);
+        try (DataOutputStream output = new DataOutputStream(bounded)) {
+            output.write(packetBody, 0, layout.entryCountOffset());
+            writeVarInt(output, kept.size());
+            for (int index : kept) {
+                int start = layout.entryOffsets()[index];
+                output.write(packetBody, start, layout.entryOffsets()[index + 1] - start);
+            }
+            output.flush();
+        } catch (BoundExceededException exception) {
+            throw new ProtocolViolationException(
+                    "selected registry packet body exceeds configured byte bound");
+        } catch (IOException exception) {
+            throw new ProtocolViolationException(
+                    "could not select registry entries: " + exception.getMessage());
+        }
+        byte[] selected = bounded.toByteArray();
+        Inspection inspection = inspect(selected, maximumBytes);
+        List<String> expectedIds = kept.stream().map(layout.entryIds()::get).toList();
+        if (!inspection.registryId().equals(layout.registryId())
+                || !inspection.entryIds().equals(expectedIds)) {
+            throw new ProtocolViolationException(
+                    "selected registry packet failed post-encode validation");
+        }
+        return Optional.of(selected);
+    }
+
+    /**
+     * Returns every NBT string of a validated body: string values and compound field names.
+     *
+     * <p>Holder references in registry network NBT are encoded as identifier strings (or as
+     * compound keys for keyed maps). The set is therefore a conservative superset of the entries
+     * one registry packet may reference, which lets callers withhold a packet whose references
+     * cannot be satisfied instead of letting the client fail its registry load.</p>
+     */
+    public static Set<String> nbtStrings(byte[] packetBody, int maximumBytes)
+            throws ProtocolViolationException {
+        Inspection inspection = inspect(packetBody, maximumBytes);
+        PacketReader reader = new PacketReader(packetBody);
+        reader.collectedStrings = new HashSet<>();
+        reader.readResourceLocation("registry id");
+        int entryCount = reader.readBoundedVarInt(1, MAXIMUM_ENTRIES, "registry entry count");
+        for (int index = 0; index < entryCount; index++) {
+            reader.readResourceLocation("registry entry id");
+            if (reader.readUnsignedByte() == 1) {
+                reader.skipNbtPayload(reader.readUnsignedByte(), 0);
+            }
+        }
+        if (reader.remaining() != 0 || entryCount != inspection.entryIds().size()) {
+            throw new ProtocolViolationException(
+                    "registry packet changed between inspection and string collection");
+        }
+        return Set.copyOf(reader.collectedStrings);
+    }
+
     private static PacketLayout parseLayout(byte[] packetBody, int maximumBytes)
             throws ProtocolViolationException {
         Inspection inspection = inspect(packetBody, maximumBytes);
@@ -254,7 +340,9 @@ public final class MinecraftRegistryPacketCodec {
         int entryCount = reader.readBoundedVarInt(
                 1, MAXIMUM_ENTRIES, "registry entry count");
         int entriesOffset = reader.position();
+        int[] entryOffsets = new int[entryCount + 1];
         for (int index = 0; index < entryCount; index++) {
+            entryOffsets[index] = reader.position();
             reader.readResourceLocation("registry entry id");
             int dataMarker = reader.readUnsignedByte();
             if (dataMarker == 0) {
@@ -271,6 +359,7 @@ public final class MinecraftRegistryPacketCodec {
             }
             reader.skipNbtPayload(rootType, 0);
         }
+        entryOffsets[entryCount] = reader.position();
         if (reader.remaining() != 0) {
             throw new ProtocolViolationException(
                     "registry packet body has trailing bytes");
@@ -284,20 +373,25 @@ public final class MinecraftRegistryPacketCodec {
                 registryId,
                 inspection.entryIds(),
                 entryCountOffset,
-                entriesOffset);
+                entriesOffset,
+                entryOffsets);
     }
 
     private record PacketLayout(
             String registryId,
             List<String> entryIds,
             int entryCountOffset,
-            int entriesOffset) {
+            int entriesOffset,
+            int[] entryOffsets) {
         private PacketLayout {
             Objects.requireNonNull(registryId, "registryId");
             entryIds = List.copyOf(Objects.requireNonNull(entryIds, "entryIds"));
+            Objects.requireNonNull(entryOffsets, "entryOffsets");
             if (entryIds.isEmpty()
                     || entryCountOffset < 1
-                    || entriesOffset <= entryCountOffset) {
+                    || entriesOffset <= entryCountOffset
+                    || entryOffsets.length != entryIds.size() + 1
+                    || entryOffsets[0] != entriesOffset) {
                 throw new IllegalArgumentException("registry packet layout is outside bounds");
             }
         }
@@ -561,6 +655,7 @@ public final class MinecraftRegistryPacketCodec {
         private final byte[] bytes;
         private int index;
         private int inspectedNbtNodes;
+        private Set<String> collectedStrings;
 
         private PacketReader(byte[] bytes) {
             this.bytes = Objects.requireNonNull(bytes, "bytes").clone();
@@ -689,7 +784,13 @@ public final class MinecraftRegistryPacketCodec {
         }
 
         private void skipNbtString() throws ProtocolViolationException {
-            skip(readUnsignedShort());
+            int length = readUnsignedShort();
+            if (collectedStrings == null) {
+                skip(length);
+            } else {
+                // Identifiers are ASCII, where modified UTF-8 and UTF-8 agree.
+                collectedStrings.add(new String(readBytes(length), StandardCharsets.UTF_8));
+            }
         }
 
         private int readInt() throws ProtocolViolationException {
