@@ -19,18 +19,19 @@ import Reika.DragonAPI.Instantiable.Data.Immutable.WorldLocation;
  * the chunk of every pylon/repeater the world ever registered, synchronously, on the server thread. On this server that
  * is ~19k pylon chunks and the 30 s+ boot stall seen in the stall reports.
  *
- * Here the saved list is reduced to entries whose chunk is already loaded. Entries in unloaded chunks are dropped from
- * the list given to ChromatiCraft; nothing is lost, because every network tile registers itself again on its first tick
- * (TileEntityCrystalBase.onFirstTick -> cachePosition -> CrystalNetworker.addTile) as soon as its chunk loads for any
- * normal reason (player nearby, chunk loader, PYLONLOAD ticket).
+ * Here the list given to ChromatiCraft is reduced to entries whose chunk is already loaded. The other entries are NOT
+ * dropped: they go to {@link DeferredNetworkTiles}, which persists them on save and resolves them on demand as soon as
+ * a network query (path search, nearby-tile lookup) reaches their range. A tile also leaves the registry when it
+ * registers itself (first tick after its chunk loads for any reason).
  *
  * The tiles already registered in memory before load() runs are appended to the list. ChromatiCraft calls load() from
- * inside the first addTile(), after that tile was put into the map, and readFromNBT starts with data.clear(); the
- * unpatched mod only gets that tile back because the old file listed every tile ever seen. With the shorter list the
- * in-memory registrations have to be carried over explicitly.
+ * inside the first addTile(), after that tile was put into the map, and readFromNBT starts with data.clear(); unpatched,
+ * that tile is lost from the network if it is not in the saved list.
  *
- * Failure policy: any RuntimeException/LinkageError leaves the NBT exactly as it was (the only mutation is the final
- * setTag), so ChromatiCraft's original load runs on the original data.
+ * Failure policy: any RuntimeException/LinkageError before the commit leaves the NBT and the registry exactly as they
+ * were, so ChromatiCraft's original load runs on the original data. The commit fills the registry and then replaces the
+ * list; should the replacement ever fail, ChromatiCraft resolves everything itself and the registry entries are
+ * harmless duplicates (skipped on resolve and on save, removed when the tile registers).
  */
 public final class BootLoadFilter {
 
@@ -63,26 +64,30 @@ public final class BootLoadFilter {
 		long t0 = System.nanoTime();
 		NBTTagList kept = new NBTTagList();
 		Set<WorldLocation> present = new HashSet<WorldLocation>();
-		int skipped = 0;
+		List<WorldLocation> deferred = new ArrayList<WorldLocation>();
 		int unreadable = 0;
 		for (int i = 0; i < total; i++) {
 			NBTTagCompound entry = locs.func_150305_b(i); // getCompoundTagAt
+			WorldLocation loc = null;
 			boolean keep;
 			try {
-				WorldLocation loc = WorldLocation.readTag(entry); // the parser ChromatiCraft's own path uses
+				loc = WorldLocation.readTag(entry); // the parser ChromatiCraft's own path uses
 				keep = ChunkGuard.isLoaded(loc);
-				if (keep)
-					present.add(loc);
 			}
 			catch (RuntimeException | LinkageError t) {
 				keep = true; // fail open: let ChromatiCraft handle the entry exactly as before
 				unreadable++;
 			}
-			if (keep)
+			if (keep) {
 				kept.func_74742_a(entry); // appendTag
-			else
-				skipped++;
+				if (loc != null)
+					present.add(loc);
+			}
+			else {
+				deferred.add(loc);
+			}
 		}
+		int skipped = deferred.size();
 
 		int carried = 0;
 		if (registered != null) {
@@ -97,13 +102,18 @@ public final class BootLoadFilter {
 			}
 		}
 
+		DeferredNetworkTiles.clear(); // load() runs once per server start; never mix in state from an earlier read
 		if (skipped == 0 && carried == 0)
 			return; // nothing to change: ChromatiCraft sees the original list untouched
 
 		long ms = (System.nanoTime() - t0) / 1000000L;
-		String summary = "Crystal network load: " + total + " saved tile locations; " + (total - skipped) + " in loaded chunks resolved now; " + skipped + " in unloaded chunks NOT force-loaded (they re-register when their chunk loads); " + carried + " in-memory registrations kept; " + unreadable + " unreadable entries left to ChromatiCraft; " + ms + " ms.";
+		String summary = "Crystal network load: " + total + " saved tile locations; " + (total - skipped) + " in loaded chunks resolved now; " + skipped + " in unloaded chunks deferred (NOT force-loaded; resolved on demand when the network reaches them, kept in the saved data); " + carried + " in-memory registrations kept; " + unreadable + " unreadable entries left to ChromatiCraft; " + ms + " ms.";
 
-		tag.func_74782_a(LOCS_KEY, kept); // setTag -- the only mutation, nothing may throw after it
+		// Commit. Registry first, NBT last: if the NBT edit failed, ChromatiCraft would resolve everything itself and the
+		// registry entries would only be duplicates that leave it on first tick / are skipped on save.
+		for (WorldLocation loc : deferred)
+			DeferredNetworkTiles.add(loc);
+		tag.func_74782_a(LOCS_KEY, kept); // setTag -- nothing may throw after it
 
 		try {
 			ChunkGuard.LOG.info(summary);

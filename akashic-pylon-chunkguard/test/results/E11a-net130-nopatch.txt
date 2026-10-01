@@ -1,0 +1,27 @@
+# E11a-net130-nopatch  (Crucible 1.7.10-staging-67b53034, ChromatiCraft V33a, DragonAPI V33b-ForbiddenFix1, UniMixins 0.3.1; 0 players)
+[RFB-Main/ERROR] [org.spongepowered.asm.service.mojang.MixinServiceLaunchWrapper]: MixinBootstrap.doInit() called during a tweak constructor!
+[Server thread/ERROR] [DragonAPI]: The mod DragonAPI is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source DragonAPI 1.7.10 V33b-ForbiddenFix1.jar, however there is no signature matching that description
+[Server thread/ERROR] [ChromatiCraft]: The mod ChromatiCraft is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source ChromatiCraft 1.7.10 V33a.jar, however there is no signature matching that description
+[Server thread/ERROR] [FML]: CHROMATICRAFT ERROR: Could not parse Guardian Stone exception, due to a malformed line (or missing item): ExtraUtilities:dark_portal:2#RIGHT_CLICK_BLOCK
+[Server thread/ERROR] [Reika.DragonAPI.Libraries.Java.ReikaASMHelper]: Called output without active mod!
+[ChromatiCraft Dimension Structure/ERROR] [FML]: CHROMATICRAFT ERROR: Failed to generate a 4x4 [true-false] puzzle in a reasonable time!
+[ChromatiCraft Dimension Structure/ERROR] [FML]: CHROMATICRAFT ERROR: Failed to generate a 4x4 [true-true] puzzle in a reasonable time!
+[Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer]: Done (17.784s)! For help, type "help" or "?"
+[Server thread/INFO] [AKPG]: [AKPG] tick=200 mspt=8.51 loaded=406 loaded0=406 loads=675 loadsTotal=675 pylons=10 net=141 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=400 mspt=2.74 loaded=408 loaded0=408 loads=2 loadsTotal=677 pylons=10 net=141 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=600 mspt=1.39 loaded=408 loaded0=408 loads=0 loadsTotal=677 pylons=10 net=141 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=800 mspt=1.73 loaded=256 loaded0=256 loads=0 loadsTotal=677 pylons=3 net=141 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1000 mspt=1.33 loaded=256 loaded0=256 loads=0 loadsTotal=677 pylons=3 net=141 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1200 mspt=1.13 loaded=256 loaded0=256 loads=0 loadsTotal=677 pylons=3 net=141 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] ticket forcing 1 chunks around chunk 375,187
+[Server thread/INFO] [AKPG]: [AKPG] charger placed at 6014,74,2994 tile=Tile Entity Storage Crystal Charger @ DIM0: 6014, 74, 2994
+[Server thread/INFO] [AKPG]: [AKPG] tick=1251 mspt=1.56 loaded=257 loaded0=257 loads=1 loadsTotal=678 pylons=3 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1400 mspt=1.63 loaded=267 loaded0=267 loads=11 loadsTotal=689 pylons=4 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1600 mspt=1.94 loaded=269 loaded0=269 loads=2 loadsTotal=691 pylons=4 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1800 mspt=1.93 loaded=269 loaded0=269 loads=0 loadsTotal=691 pylons=4 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=2000 mspt=1.85 loaded=266 loaded0=266 loads=0 loadsTotal=691 pylons=4 net=142 prevented=-1 resolved=-1
+                                                                                                          
+[Server thread/INFO] [AKPG]: [AKPG] tick=2200 mspt=1.48 loaded=267 loaded0=267 loads=1 loadsTotal=692 pylons=4 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=2400 mspt=1.58 loaded=268 loaded0=268 loads=1 loadsTotal=693 pylons=4 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] charger 6014,74,2994 energy=120000 {PINK=120000}
+[Server thread/INFO] [AKPG]: [AKPG] tick=2439 mspt=1.43 loaded=268 loaded0=268 loads=0 loadsTotal=693 pylons=4 net=142 prevented=-1 resolved=-1

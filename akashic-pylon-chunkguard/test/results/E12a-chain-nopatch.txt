@@ -1,0 +1,26 @@
+# E12a-chain-nopatch  (Crucible 1.7.10-staging-67b53034, ChromatiCraft V33a, DragonAPI V33b-ForbiddenFix1, UniMixins 0.3.1; 0 players)
+[RFB-Main/ERROR] [org.spongepowered.asm.service.mojang.MixinServiceLaunchWrapper]: MixinBootstrap.doInit() called during a tweak constructor!
+[Server thread/ERROR] [DragonAPI]: The mod DragonAPI is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source DragonAPI 1.7.10 V33b-ForbiddenFix1.jar, however there is no signature matching that description
+[Server thread/ERROR] [ChromatiCraft]: The mod ChromatiCraft is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source ChromatiCraft 1.7.10 V33a.jar, however there is no signature matching that description
+[Server thread/ERROR] [FML]: CHROMATICRAFT ERROR: Could not parse Guardian Stone exception, due to a malformed line (or missing item): ExtraUtilities:dark_portal:2#RIGHT_CLICK_BLOCK
+[Server thread/ERROR] [Reika.DragonAPI.Libraries.Java.ReikaASMHelper]: Called output without active mod!
+[ChromatiCraft Dimension Structure/ERROR] [FML]: CHROMATICRAFT ERROR: Failed to generate a 4x4 [true-false] puzzle in a reasonable time!
+[Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer]: Done (18.658s)! For help, type "help" or "?"
+[Server thread/INFO] [AKPG]: [AKPG] tick=200 mspt=3.51 loaded=1171 loaded0=1171 loads=546 loadsTotal=546 pylons=141 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=400 mspt=5.62 loaded=1171 loaded0=1171 loads=0 loadsTotal=546 pylons=141 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=600 mspt=5.49 loaded=383 loaded0=383 loads=104 loadsTotal=650 pylons=5 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=800 mspt=1.75 loaded=383 loaded0=383 loads=0 loadsTotal=650 pylons=5 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1000 mspt=1.70 loaded=383 loaded0=383 loads=0 loadsTotal=650 pylons=5 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1200 mspt=1.58 loaded=256 loaded0=256 loads=0 loadsTotal=650 pylons=3 net=142 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] ticket forcing 1 chunks around chunk 374,187
+[Server thread/INFO] [AKPG]: [AKPG] charger placed at 5986,88,2994 tile=Tile Entity Storage Crystal Charger @ DIM0: 5986, 88, 2994
+[Server thread/INFO] [AKPG]: [AKPG] tick=1260 mspt=1.47 loaded=257 loaded0=257 loads=1 loadsTotal=651 pylons=3 net=143 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1400 mspt=1.55 loaded=267 loaded0=267 loads=10 loadsTotal=661 pylons=4 net=143 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1600 mspt=1.45 loaded=267 loaded0=267 loads=0 loadsTotal=661 pylons=4 net=143 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=1800 mspt=1.51 loaded=258 loaded0=258 loads=1 loadsTotal=662 pylons=3 net=143 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=2000 mspt=1.36 loaded=258 loaded0=258 loads=0 loadsTotal=662 pylons=3 net=143 prevented=-1 resolved=-1
+                                                                                                          
+[Server thread/INFO] [AKPG]: [AKPG] tick=2200 mspt=1.30 loaded=258 loaded0=258 loads=0 loadsTotal=662 pylons=3 net=143 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] tick=2400 mspt=1.44 loaded=258 loaded0=258 loads=1 loadsTotal=663 pylons=3 net=143 prevented=-1 resolved=-1
+[Server thread/INFO] [AKPG]: [AKPG] charger 5986,88,2994 energy=120000 {PINK=120000}
+[Server thread/INFO] [AKPG]: [AKPG] tick=2426 mspt=1.31 loaded=258 loaded0=258 loads=0 loadsTotal=663 pylons=3 net=143 prevented=-1 resolved=-1

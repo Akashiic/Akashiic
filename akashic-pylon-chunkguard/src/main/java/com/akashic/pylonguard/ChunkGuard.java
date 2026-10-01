@@ -93,6 +93,47 @@ public final class ChunkGuard {
 		return prevented;
 	}
 
+	private static long resolved;
+	private static long resolvedSinceReport;
+	private static long lastResolveReport = System.nanoTime();
+	private static boolean firstResolveLogged;
+	private static boolean resolveFailureLogged;
+
+	public static long resolvedSoFar() {
+		return resolved;
+	}
+
+	/** A deferred crystal-network tile was resolved on demand (a network query reached it). */
+	public static void countResolved() {
+		resolved++;
+		resolvedSinceReport++;
+		try {
+			if (!firstResolveLogged) {
+				firstResolveLogged = true;
+				LOG.info("Crystal network: resolved a deferred network tile on demand (a path search or lookup reached it). Further ones are summarised every 10 minutes.");
+			}
+			long now = System.nanoTime();
+			if (now - lastResolveReport >= REPORT_INTERVAL_NANOS) {
+				LOG.info("Last 10 minutes: resolved " + resolvedSinceReport + " deferred crystal network tiles on demand (" + resolved + " since start; " + DeferredNetworkTiles.size() + " still deferred).");
+				resolvedSinceReport = 0;
+				lastResolveReport = now;
+			}
+		}
+		catch (RuntimeException | LinkageError ignored) {
+		}
+	}
+
+	public static void logResolveFailure(WorldLocation loc, Throwable t) {
+		if (resolveFailureLogged)
+			return;
+		resolveFailureLogged = true;
+		try {
+			LOG.error("Crystal network: could not resolve deferred tile at " + loc + " (kept, retried on the next query; logged once).", t);
+		}
+		catch (RuntimeException | LinkageError ignored) {
+		}
+	}
+
 	private static void count(int dim, int x, int z, String what) {
 		prevented++;
 		preventedSinceReport++;

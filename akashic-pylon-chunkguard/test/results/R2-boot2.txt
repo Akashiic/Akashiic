@@ -1,0 +1,24 @@
+# R2-boot2  (Crucible 1.7.10-staging-67b53034, ChromatiCraft V33a, DragonAPI V33b-ForbiddenFix1, UniMixins 0.3.1; 0 players)
+[RFB-Main/ERROR] [org.spongepowered.asm.service.mojang.MixinServiceLaunchWrapper]: MixinBootstrap.doInit() called during a tweak constructor!
+[Server thread/INFO] [AkashicPylonGuard]: Crystal pylon chunk guard: applying [TileEntityCrystalPylonMixin, PylonGeneratorMixin, CrystalNetworkerMixin].
+[Server thread/ERROR] [DragonAPI]: The mod DragonAPI is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source DragonAPI 1.7.10 V33b-ForbiddenFix1.jar, however there is no signature matching that description
+[Server thread/ERROR] [ChromatiCraft]: The mod ChromatiCraft is expecting signature 32:F5:F4:E8:44:C0:EA:C8:6F:46:8A:8E:F3:05:05:7B:6F:90:0F:78 for source ChromatiCraft 1.7.10 V33a.jar, however there is no signature matching that description
+[Server thread/ERROR] [FML]: CHROMATICRAFT ERROR: Could not parse Guardian Stone exception, due to a malformed line (or missing item): ExtraUtilities:dark_portal:2#RIGHT_CLICK_BLOCK
+[Server thread/ERROR] [Reika.DragonAPI.Libraries.Java.ReikaASMHelper]: Called output without active mod!
+[Server thread/INFO] [net.minecraft.server.dedicated.DedicatedServer]: Done (16.765s)! For help, type "help" or "?"
+[Server thread/INFO] [AkashicPylonGuard]: Crystal network load: 46 saved tile locations; 4 in loaded chunks resolved now; 42 in unloaded chunks deferred (NOT force-loaded; resolved on demand when the network reaches them, kept in the saved data); 0 in-memory registrations kept; 0 unreadable entries left to ChromatiCraf
+[Server thread/INFO] [AkashicPylonGuard]: Pylon location cache load: 4 pylons in loaded chunks validated; 42 pylons in unloaded chunks kept without force-loading their chunk.
+[Server thread/INFO] [AkashicPylonGuard]: Prevented the first chunk load by a crystal pylon (getBlock at dim 0, block -19, -38, chunk -2, -3). Further ones are summarised every 10 minutes.
+[Server thread/INFO] [AKPG]: [AKPG] tick=200 mspt=2.15 loaded=279 loaded0=279 loads=0 loadsTotal=0 pylons=4 net=46 prevented=8 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=400 mspt=1.17 loaded=279 loaded0=279 loads=0 loadsTotal=0 pylons=4 net=46 prevented=43 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=600 mspt=0.79 loaded=279 loaded0=279 loads=0 loadsTotal=0 pylons=4 net=46 prevented=80 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=800 mspt=0.85 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=46 prevented=106 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=1000 mspt=0.69 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=46 prevented=106 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=1200 mspt=0.76 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=46 prevented=106 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=1400 mspt=0.29 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=46 prevented=106 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=1600 mspt=0.28 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=46 prevented=106 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=1800 mspt=0.25 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=46 prevented=106 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=2000 mspt=0.23 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=46 prevented=106 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=2200 mspt=0.23 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=46 prevented=106 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=2400 mspt=0.23 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=46 prevented=106 resolved=0
+[Server thread/INFO] [AKPG]: [AKPG] tick=2421 mspt=0.23 loaded=256 loaded0=256 loads=0 loadsTotal=0 pylons=3 net=46 prevented=106 resolved=0

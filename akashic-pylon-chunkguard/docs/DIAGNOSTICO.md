@@ -119,18 +119,61 @@ chunk) + 6 pylons naturais, todos com energia cheia; 0 jogadores. Saídas brutas
 | E6b | patch + jar antigo juntos | 4 | 276 | 1 | patch atua; aviso para remover o antigo |
 | E7a/b | lista `crystalnet` vazia | 46 / 4 | — | — | sem patch: 45 tiles na rede para 46 pylons; com patch: "1 in-memory registration kept", nenhum tile perdido |
 | E8a/b/c | boot 1, boot 2, rollback | 4 / 4 / 46 | 275 / 625 / 792 | 0 / 0 / 167 | rollback restaura o original; `crystalnet.dat` volta de 4 para 46 entradas |
-| E9 | **jar entregue** (`5575f205…`) + jar antigo | 4 | 625 | 0 | teste de fumaça do artefato final: mesmos resultados, aviso para remover o antigo |
+| E9 | 1.0.0 (`5575f205…`) + jar antigo | 4 | 625 | 0 | teste de fumaça do 1.0.0 (substituído pelo 1.0.1, ver 6.1) |
 
 Erros no log: o conjunto de linhas `ERROR` com o patch é idêntico ao da linha de base (E0 × E8a). O erro ocasional
 `Failed to generate a 4x4 puzzle` (thread de estruturas da dimensão do ChromatiCraft) aparece também sem o patch (E5, E7a, boots anteriores).
 
 Builds usados: E2b/E3/E4b/E5 rodaram com um build anterior em que o loader pulava o filtro de boot quando o jar antigo estava presente;
-E6b/E7b/E8 com o build `29a9c9a0…`; o jar entregue (`5575f205…`) difere deste só no texto de um aviso de log e passou pelo E9. Os mixins
-são idênticos em todos. O build é determinístico (mesmo SHA-256 em builds repetidos, com ou sem o dump de classes de runtime).
+E6b/E7b/E8 com o build `29a9c9a0…`; o 1.0.0 (`5575f205…`) difere deste só no texto de um aviso de log e passou pelo E9.
+Nesses experimentos o mixin do pylon e o do `PylonGenerator` são idênticos aos do 1.0.1; o do `CrystalNetworker` mudou no
+1.0.1 (seção 6.1), que foi testado em E10e, E11c, E12c e R1–R5. Jar entregue: **1.0.1 (`9bf45e50…`)**. O build é
+determinístico (mesmo SHA-256 em builds repetidos, com ou sem o dump de classes de runtime).
+
+## 6.1 Rede de cristal e progressão (1.0.0 → 1.0.1)
+
+Pergunta verificada: o ChromatiCraft continua funcional e progressivo com o patch?
+
+* [código] O `PylonFinder` (caminho receptor → repetidores → pylon, usado pela mesa de conjuração, máquinas, carregadores)
+  procura transmissores com `CrystalNetworker.getTransmittersTo`, que só enxerga tiles **registrados**. Sem patch, o boot
+  registra todos; depois o GC do Crucible descarrega os chunks, mas os tiles continuam no mapa e o `CrystalFlow` recarrega
+  o chunk do pylon quando transfere energia.
+* **O 1.0.0 quebrava isso** [medido]: carregador (`TileEntityCrystalCharger`, receptor real, alcance 20) a 20 blocos /
+  2 chunks de um pylon com o chunk descarregado:
+
+| Exp. | Mundo | Configuração | Energia no carregador | Carregamentos no boot | Tiles resolvidos sob demanda |
+|---|---|---|---|---|---|
+| E10c | 46 tiles | sem patch | **120.000** | 197 | — |
+| E10d | 46 tiles | 1.0.0 | **0** | 0 | — |
+| E10e | 46 tiles | **1.0.1** | **120.000** | 0 | 42 (rede ≤100 tiles: o mod faz uma consulta global) |
+| E11a | 141 tiles | sem patch | **120.000** | 675 | — |
+| E11b | 141 tiles | 1.0.0 | **0** | 0 | — |
+| E11c | 141 tiles | **1.0.1** | **120.000** | 0 | **1** (só o pylon no alcance) |
+| E12a | 142 tiles, cadeia pylon → **repetidor** → carregador | sem patch | **120.000** | 546+ | — |
+| E12b | idem | 1.0.0 | **0** | 0 | — |
+| E12c | idem | **1.0.1** | **120.000** | 0 | **2** (o repetidor e o pylon) |
+
+  (E10a, com o carregador a 15 blocos no chunk vizinho, não isolava o caso: o chunk do pylon foi carregado pela vizinhança do
+  chunk forçado e o pylon se registrou sozinho.)
+* **Correção do 1.0.1** [código + medido]: tiles em chunks descarregados vão para um registro adiado
+  (`DeferredNetworkTiles`), gravado em todo save (o `crystalnet.dat` ficou com 46 → 46 entradas em dois boots seguidos; no
+  1.0.0 caía para 4) e resolvido sob demanda em todas as consultas de alcance do `CrystalNetworker` (`getTransmittersTo`,
+  `getNearbyReceivers`, `getNearTilesOfType`, `getNearestTileOfType`, `getNearbyPylons`, `getAllNearbyPylons`) e na única
+  consulta global (`getAllSourcesFor`, chamada pelo mod só para redes de até 100 tiles). `size()` inclui os adiados, para o
+  atalho "rede com mais de 100 tiles" do `PylonFinder` funcionar como sem patch (no servidor real a rede tem 19 mil+ tiles).
+* [código] Gatilhos de progressão nas classes alteradas: `PYLON`, `LINK`, `POWERCRYSTAL`, `TURBOCHARGE`, `RUNEUSE`, `CTM`,
+  `ALLCOLORS` ficam em `onUsingWandTick` / `canPlayerWandPylon` / `charge` (jogador presente; não alterados). `USEENERGY`
+  dispara quando uma requisição de energia dá certo — o caso provado acima.
+* Bateria de regressão do 1.0.1 (R1–R5, `test/results/`): boot 1 e 2 sem carregamentos e sem perda de dados, rollback
+  íntegro, lista vazia ("1 in-memory registrations kept"), convivência com o jar antigo; linhas `ERROR` idênticas à base.
 
 ## 7. O que não está provado (e como confirmar)
 
 * O ganho em produção é **estimativa**: a escala do teste é 46 pylons, não 19 mil. A conta da seção 3.2 e o sampler indicam que os
   pylons explicam quase todos os 124 mil chunks; confirme com `/spark heapsummary` e `/spark tps` 10–15 min após o boot.
 * Testado com um subconjunto dos ~280 mods do servidor. Outro mod com `@Redirect` nas mesmas chamadas faria o boot falhar (falha segura).
+* A rede foi testada com receptor real (carregador) direto do pylon e por uma cadeia com um repetidor real (estrutura de
+  runa + pilares). Não foram testados a mesa de conjuração, Skypeaters, Broadcasters ou redes de jogadores com dezenas de
+  repetidores; o mecanismo é o mesmo (`getTransmittersTo` em cada nó da busca), mas vale conferir uma rede real de um
+  jogador logo após o primeiro restart com o patch.
 * Se, com o patch, o número de chunks/entidades continuar alto, existe outra fonte; o próximo passo seria um novo sampler com o patch ativo.

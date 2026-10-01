@@ -103,14 +103,15 @@ public class HarnessMod {
 				if (o instanceof TileEntityCrystalPylon)
 					pylons++;
 		}
-		long prevented = -1;
+		long prevented = -1, resolved = -1;
 		try {
 			prevented = (Long) Class.forName("com.akashic.pylonguard.ChunkGuard").getMethod("preventedSoFar").invoke(null);
+			resolved = (Long) Class.forName("com.akashic.pylonguard.ChunkGuard").getMethod("resolvedSoFar").invoke(null);
 		}
 		catch (Throwable ignored) {
 		}
-		String s = String.format("[AKPG] tick=%d mspt=%.2f loaded=%d loaded0=%d loads=%d loadsTotal=%d pylons=%d net=%d prevented=%d",
-			srv.func_71259_af(), mspt, loaded, loaded0, loadsWindow, loadsTotal, pylons, CrystalNetworker.instance.size(), prevented);
+		String s = String.format("[AKPG] tick=%d mspt=%.2f loaded=%d loaded0=%d loads=%d loadsTotal=%d pylons=%d net=%d prevented=%d resolved=%d",
+			srv.func_71259_af(), mspt, loaded, loaded0, loadsWindow, loadsTotal, pylons, CrystalNetworker.instance.size(), prevented, resolved);
 		loadsWindow = 0;
 		return s;
 	}
@@ -221,6 +222,40 @@ public class HarnessMod {
 						LOG.info("[AKPG] set energy of pylon " + te.field_145851_c + "," + te.field_145848_d + "," + te.field_145849_e + " to " + v);
 					}
 				}
+			}
+			else if (a[0].equals("charger")) {
+				// place a ChromatiCraft Crystal Charger (a real network receiver, range 20, needs line of sight)
+				int x = Integer.parseInt(a[1]), y = Integer.parseInt(a[2]), z = Integer.parseInt(a[3]);
+				Reika.ChromatiCraft.Registry.ChromaTiles t = Reika.ChromatiCraft.Registry.ChromaTiles.CHARGER;
+				w.func_147465_d(x, y, z, t.getBlock(), t.getBlockMetadata(), 3); // setBlock
+				LOG.info("[AKPG] charger placed at " + x + "," + y + "," + z + " tile=" + w.func_147438_o(x, y, z));
+			}
+			else if (a[0].equals("repeater")) {
+				// akpg repeater <x> <y> <z> <pylonX> <pylonY> <pylonZ>: a real Crystal Repeater (rune of the pylon's colour
+				// below it, then two pylon-structure blocks: TileEntityCrystalRepeater.checkForStructure, facing DOWN)
+				int x = Integer.parseInt(a[1]), y = Integer.parseInt(a[2]), z = Integer.parseInt(a[3]);
+				TileEntity py = w.func_147438_o(Integer.parseInt(a[4]), Integer.parseInt(a[5]), Integer.parseInt(a[6]));
+				Field col = TileEntityCrystalPylon.class.getDeclaredField("color");
+				col.setAccessible(true);
+				int color = ((Enum<?>) col.get(py)).ordinal();
+				net.minecraft.block.Block struct = Reika.ChromatiCraft.Registry.ChromaBlocks.PYLONSTRUCT.getBlockInstance();
+				net.minecraft.block.Block rune = Reika.ChromatiCraft.Registry.ChromaBlocks.RUNE.getBlockInstance();
+				w.func_147465_d(x, y - 3, z, struct, 0, 3);
+				w.func_147465_d(x, y - 2, z, struct, 0, 3);
+				w.func_147465_d(x, y - 1, z, rune, color, 3);
+				Reika.ChromatiCraft.Registry.ChromaTiles t = Reika.ChromatiCraft.Registry.ChromaTiles.REPEATER;
+				w.func_147465_d(x, y, z, t.getBlock(), t.getBlockMetadata(), 3);
+				LOG.info("[AKPG] repeater placed at " + x + "," + y + "," + z + " colour " + color + " tile=" + w.func_147438_o(x, y, z));
+			}
+			else if (a[0].equals("chargerstat")) {
+				Field en = Reika.ChromatiCraft.Base.TileEntity.CrystalReceiverBase.class.getDeclaredField("energy");
+				en.setAccessible(true);
+				for (Object o : w.field_147482_g) // loadedTileEntityList
+					if (o instanceof Reika.ChromatiCraft.TileEntity.Auxiliary.TileEntityCrystalCharger) {
+						TileEntity te = (TileEntity) o;
+						Reika.ChromatiCraft.Magic.ElementTagCompound tag = (Reika.ChromatiCraft.Magic.ElementTagCompound) en.get(o);
+						LOG.info("[AKPG] charger " + te.field_145851_c + "," + te.field_145848_d + "," + te.field_145849_e + " energy=" + tag.getTotalEnergy() + " " + tag);
+					}
 			}
 			else if (a[0].equals("ticket")) {
 				int cx = Integer.parseInt(a[1]) >> 4, cz = Integer.parseInt(a[2]) >> 4, r = Integer.parseInt(a[3]);

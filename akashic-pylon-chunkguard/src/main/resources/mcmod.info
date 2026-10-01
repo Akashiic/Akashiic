@@ -3,7 +3,7 @@
   "modid": "akashic_pylon_chunkguard",
   "name": "Akashic Pylon Chunk Guard",
   "description": "Server-side fix: ChromatiCraft crystal pylons no longer load chunks from their tick, and the crystal network no longer force-loads every saved tile chunk at startup.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "mcversion": "1.7.10",
   "authorList": ["Rede Akashic"],
   "dependencies": []
