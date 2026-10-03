@@ -1,0 +1,7 @@
+name: AkashicVoidGenerator
+main: br.com.redeakashic.voidgen.AkashicVoidGenerator
+version: 1.0.0
+description: Void world generator compatible with Crucible + EndlessIDs (uses generateBlockSections, not the legacy byte[] generate).
+authors: [Rede Akashic]
+load: STARTUP
+loadbefore: [Multiverse-Core]
