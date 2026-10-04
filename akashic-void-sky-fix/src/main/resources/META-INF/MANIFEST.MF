@@ -2,5 +2,5 @@ Manifest-Version: 1.0
 FMLCorePlugin: com.akashic.compat.voidsky.VoidSkyLoadingPlugin
 FMLCorePluginContainsFMLMod: false
 Implementation-Title: Akashic Void Sky Fix
-Implementation-Version: 1.0.0
+Implementation-Version: 1.0.1
 Implementation-Vendor: Rede Akashic

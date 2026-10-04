@@ -27,7 +27,7 @@ public final class VoidSkyLoadingPlugin implements IFMLLoadingPlugin {
 
     @Override
     public void injectData(Map<String, Object> data) {
-        System.out.println("[Akashic Void Sky Fix] v1.0.0 armed (client side; no-op on dedicated servers).");
+        System.out.println("[Akashic Void Sky Fix] v1.0.1 armed (client side; no-op on dedicated servers).");
     }
 
     @Override

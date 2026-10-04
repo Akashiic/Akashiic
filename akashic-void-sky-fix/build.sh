@@ -13,7 +13,7 @@ CLIENT_SRG="${2:?usage: ./build.sh <compile-classpath> <client-srg.jar> [Dynamic
 DSURROUND="${3:-}"
 cd "$(dirname "$0")"
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 OUT="build"
 rm -rf "$OUT" && mkdir -p "$OUT/classes" "$OUT/test-classes" dist
 
