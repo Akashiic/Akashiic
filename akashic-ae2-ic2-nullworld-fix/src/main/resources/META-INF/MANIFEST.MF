@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+FMLCorePlugin: br.com.redeakashic.ae2ic2fix.AkashicAE2FixPlugin
+Implementation-Title: Akashic AE2 IC2 NullWorld Fix
+Implementation-Version: 1.0.0
