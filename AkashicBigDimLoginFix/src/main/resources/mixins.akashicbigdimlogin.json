@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.akashic.bigdimlogin.mixins",
+  "refmap": "mixins.akashicbigdimlogin.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "AccessorS01PacketJoinGame",
+    "MixinNetHandlerPlayServer"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
