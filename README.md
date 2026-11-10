@@ -1,7 +1,5 @@
 <div align="center">
 
-  <img src="assets/dante-inspired-loop.gif" width="480" alt="AI-generated Dante-inspired demon hunter animation" />
-
   <h1>You met me at a very Chinese time of my life</h1>
 
   <p><strong>Music so Good - even Devil May Cry</strong></p>
