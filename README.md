@@ -12,4 +12,6 @@
 
   <sub>Devil May Cry · Dante · music on repeat</sub>
 
+  <img src="assets/HX0jvsTbYAA0No_.jpg" />
+
 </div>
